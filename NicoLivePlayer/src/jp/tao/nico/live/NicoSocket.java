@@ -9,10 +9,10 @@ import java.net.UnknownHostException;
 
 
 public class NicoSocket implements Runnable{
-	private final String SERVER_ERR_MESSAGE = "エラー内容：サーバーとの接続に失敗しました。";
-	private final String SERVER_MESSAGE = "サーバーからのメッセージ：サーバーとの接続に成功しました。";
+	protected final String SERVER_ERR_MESSAGE = "エラー内容：サーバーとの接続に失敗しました。";
+	protected final String SERVER_MESSAGE = "サーバーからのメッセージ：サーバーとの接続に成功しました。";
 	private Socket socket = null;
-    private BufferedReader reader = null;
+	private BufferedReader reader = null;
     private OutputStreamWriter osw = null;
     private NicoMessage nicoMesssage = null;
 	private OnReceiveListener onReceive;
@@ -21,8 +21,17 @@ public class NicoSocket implements Runnable{
 		this.nicoMesssage = nicoMesssage;
 	}
 	
-	public BufferedReader getCommentStream(){
+	protected Socket getSocket() {
+		return socket;
+	}
+	protected void setSocket(Socket socket) {
+		this.socket = socket;
+	}
+	protected BufferedReader getCommentStream(){
 		return this.reader;
+	}
+	protected void setCommentStream(BufferedReader reader){
+		this.reader = reader;
 	}
 	
 	public String connectCommentServer(String addr, int port, String thread) {
@@ -46,7 +55,7 @@ public class NicoSocket implements Runnable{
 
         return SERVER_MESSAGE;
     }
-	
+
 	public void run(){
         while (socket.isConnected()){
             try{
@@ -60,6 +69,9 @@ public class NicoSocket implements Runnable{
 	
 	public void onReceive(final OnReceiveListener onReceive){
 		this.onReceive = onReceive;
+	}
+	protected OnReceiveListener getOnReceive() {
+		return this.onReceive;
 	}
 
 	public boolean isConnected() {
