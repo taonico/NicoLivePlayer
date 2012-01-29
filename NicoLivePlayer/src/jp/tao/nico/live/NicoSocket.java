@@ -15,7 +15,7 @@ public class NicoSocket implements Runnable{
 	private BufferedReader reader = null;
     private OutputStreamWriter osw = null;
     private NicoMessage nicoMesssage = null;
-	private OnReceiveListener onReceive;
+	private OnReceiveListener onReceiveListener;
     
 	public NicoSocket(NicoMessage nicoMesssage){
 		this.nicoMesssage = nicoMesssage;
@@ -59,19 +59,33 @@ public class NicoSocket implements Runnable{
 	public void run(){
         while (socket.isConnected()){
             try{
-            	nicoMesssage.getCommentMessage(reader, onReceive);
+            	nicoMesssage.getCommentMessage(reader, onReceiveListener);
             }
             catch(Exception ex){
                 ex.printStackTrace();
             }
         }
     }
+	public Runnable getAlertSocketRun(){
+		return new Runnable(){
+			public void run() {
+				while (socket.isConnected()){
+		            try{
+		            	nicoMesssage.getAlertMessage(reader, onReceiveListener);
+		            }
+		            catch(Exception ex){
+		                ex.printStackTrace();
+		            }
+		        }
+			}
+		};
+	}
 	
-	public void onReceive(final OnReceiveListener onReceive){
-		this.onReceive = onReceive;
+	public void setOnReceiveListener(final OnReceiveListener onReceiveListener){
+		this.onReceiveListener = onReceiveListener;
 	}
 	protected OnReceiveListener getOnReceive() {
-		return this.onReceive;
+		return this.onReceiveListener;
 	}
 
 	public boolean isConnected() {

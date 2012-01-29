@@ -63,6 +63,9 @@ public class NicoRequest {
 	private String _thread;
 	//Login
 	private boolean _isLogin = false;
+	//Login Alert
+	private boolean _isLoginAlert = false;
+	
 	
 	public NicoRequest (NicoMessage nicoMesssage){
 		this.nicoMesssage = nicoMesssage;
@@ -80,6 +83,9 @@ public class NicoRequest {
 	
 	public boolean isLogin(){
 		return this._isLogin;
+	}
+	public boolean isLoginAlert(){
+		return this._isLoginAlert;
 	}
 	
 	public String login (String mail, String password) {
@@ -170,13 +176,17 @@ public class NicoRequest {
 				this._alertaddr = nicoMesssage.getNodeValue(doc, "addr");
 				this.set_alertport(nicoMesssage.getNodeValue(doc, "port"));
 				this._alertthread = nicoMesssage.getNodeValue(doc, "thread");
+				this._isLoginAlert = true;
+				return "アラートログインしました";
 			}
 			
 		}catch (Exception e){
-        	return e.getMessage();//"ログインに失敗しました";
+			this._isLoginAlert = false;
+        	return "errer " + e.getMessage();//"ログインに失敗しました";
         }
 		
-		return "アラートログインしました";
+		this._isLoginAlert = false;
+		return "アラートログインに失敗しました";
 	}
 	
 	private InputStream getInputStream(HttpResponse response) throws IllegalStateException, IOException{

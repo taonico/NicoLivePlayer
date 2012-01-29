@@ -67,7 +67,27 @@ public class NicoMessage {
 		
 		return true;
 	}
-	
+	public boolean getAlertMessage(BufferedReader reader, final OnReceiveListener onReceive) {
+		StringBuffer buff = new StringBuffer();
+		
+		int c = -1;
+		
+		try {
+			while ((c = reader.read()) != -1) {
+				if (c == '\0') {
+					String[] chat = getChatData(buff.toString());
+					onReceive.onReceive(chat[0]+":"+chat[1]+":"+chat[2]);
+					buff = new StringBuffer();
+				} else {
+					buff.append((char) c);
+				}
+			}
+		} catch (IOException e) {
+			return false;
+		}
+		
+		return true;
+	}
 	public String getChat(String chatdata){
 		Matcher matcher = _commentChatpattern.matcher(chatdata);
 		if(matcher.matches()){
