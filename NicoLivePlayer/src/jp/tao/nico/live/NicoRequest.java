@@ -48,7 +48,7 @@ public class NicoRequest {
 	//
 	private SchemeRegistry schemeRegistry = new SchemeRegistry();
 	private HttpParams httpParams = new BasicHttpParams();
-	private NicoMessage nicoMesssage = null;
+	private NicoMessage nicoMessage = null;
 	//Login -> getplayerstatus
 	private CookieStore _cookieStore;
 	
@@ -57,7 +57,7 @@ public class NicoRequest {
 	private int _alertport;
 	private String _alertthread = null;
 	//getplayerstatus
-	private String _url = null;
+	private PlayerStatusData _playerStatusData = null;
 	private String _addr;
 	private int _port;
 	private String _thread;
@@ -68,7 +68,7 @@ public class NicoRequest {
 	
 	
 	public NicoRequest (NicoMessage nicoMesssage){
-		this.nicoMesssage = nicoMesssage;
+		this.nicoMessage = nicoMesssage;
 		
 		HostnameVerifier hostnameVerifier = org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 		SSLSocketFactory socketFactory = SSLSocketFactory.getSocketFactory();
@@ -156,7 +156,7 @@ public class NicoRequest {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
 				//
 				if (response.getEntity().isStreaming()){
-					ticket = nicoMesssage.getNodeValue(getInputStream(response), "ticket");
+					ticket = nicoMessage.getNodeValue(getInputStream(response), "ticket");
 				}
 			}
 			
@@ -172,10 +172,10 @@ public class NicoRequest {
 			}
 			
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				Document doc = nicoMesssage.getDocument(getInputStream(response));
-				this._alertaddr = nicoMesssage.getNodeValue(doc, "addr");
-				this.set_alertport(nicoMesssage.getNodeValue(doc, "port"));
-				this._alertthread = nicoMesssage.getNodeValue(doc, "thread");
+				Document doc = nicoMessage.getDocument(getInputStream(response));
+				this._alertaddr = nicoMessage.getNodeValue(doc, "addr");
+				this.set_alertport(nicoMessage.getNodeValue(doc, "port"));
+				this._alertthread = nicoMessage.getNodeValue(doc, "thread");
 				this._isLoginAlert = true;
 				return "アラートログインしました";
 			}
@@ -215,7 +215,7 @@ public class NicoRequest {
 		return _alertthread;
 	}
 
-	public String getPlayerStatus(String lv) {
+	public PlayerStatusData getPlayerStatus(String lv) {
 		
 		try {
 			
@@ -230,18 +230,18 @@ public class NicoRequest {
 			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), get);
 		
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				Document doc = nicoMesssage.getDocument(getInputStream(response));
-				this._url  = nicoMesssage.getNodeValue(doc, "url");
-				this._addr = (nicoMesssage.getNodeValue(doc, "addr"));
-				this.set_port(nicoMesssage.getNodeValue(doc, "port"));
-				this._thread = (nicoMesssage.getNodeValue(doc, "thread"));
+				Document doc = nicoMessage.getDocument(getInputStream(response));
+				this._playerStatusData  = nicoMessage.getPlayerStatusData(doc);
+				this._addr = (nicoMessage.getNodeValue(doc, "addr"));
+				this.set_port(nicoMessage.getNodeValue(doc, "port"));
+				this._thread = (nicoMessage.getNodeValue(doc, "thread"));
 			}
 			
 		}catch (Exception e){
-        	return e.getMessage();
+        	return null; //e.getMessage();
         }
 		
-		return this._url;
+		return this._playerStatusData;
 	}
 
 	public String getAddress() {
