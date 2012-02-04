@@ -17,10 +17,18 @@ public class NicoMessage {
 	//private Document document = null;
 	private final String _chatMessage = "<thread thread=\"{0}\" version=\"20061206\" res_from=\"-1\"/>\0";
 	private final Pattern chatpattern = Pattern.compile("<chat.*>(.*,.*,.*)</chat>");
-	private final Pattern _commentChatpattern = Pattern.compile("<chat .* no=\"([0-9]*?)\" .* user_id=\"(.*?)\" .*>(.*)</chat>");
+	private final Pattern _commentChatpattern = Pattern.compile("<chat .* no=\"([0-9]*?)\" .* user_id=\"(.*?)\" .*>(.*)</chat>"); 
 	
 	public NicoMessage(){
 		
+	}
+	
+	public PlayerStatusData getPlayerStatusData(Document getplayerstatusXML){
+		PlayerStatusData playerStatusData = new PlayerStatusData(getNodeValue(getplayerstatusXML, PlayerStatusData.LIVEID));
+		playerStatusData.setUrl(getNodeValue(getplayerstatusXML, PlayerStatusData.LIVE_STRAEM_URL));
+		playerStatusData.setContents(getNodeValue(getplayerstatusXML, PlayerStatusData.CONTENTS_rtmp).substring(5));
+		playerStatusData.setTicket(getNodeValue(getplayerstatusXML, PlayerStatusData.TICKET));
+		return playerStatusData;
 	}
 	
 	public Document getDocument(InputStream is) throws SAXException, IOException, ParserConfigurationException{

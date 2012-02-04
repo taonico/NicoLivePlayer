@@ -11,6 +11,7 @@ import android.text.InputType;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.MediaController;
@@ -36,13 +37,12 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 	//表示をPasswordから番組IDに書き換えています
 	private TextView tvPassword;
 	//ビデオ表示したい
-	private VideoView video;
+	private WebView video;
 	
 	private NicoMessage nicoMesssage = null;
 	private NicoRequest nico = null;
 	private NicoSocket nicosocket = null;
 	private int _senderID = 0;
-	private final int ON_ARERT_ID = -1;
 	
 	
     /** Called when the activity is first created. */
@@ -64,7 +64,7 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
         etLiveNo = (EditText)findViewById(R.id.et_password);
         etResponse = (EditText)findViewById(R.id.ed_response);
         tvPassword = (TextView)findViewById(R.id.tv_password);
-        video = (VideoView)findViewById(R.id.videoview);
+        video = (WebView)findViewById(R.id.videoView);
         
         //
         nicoMesssage = new NicoMessage();
@@ -135,7 +135,7 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
         					etResponse.setText("disconnected");
         					btnLiveNo.setVisibility(View.VISIBLE);
         					btnDisconnect.setVisibility(View.GONE);
-        					video.stopPlayback();
+        					//video.stopPlayback();
         				}
         			}
         			return;
@@ -156,13 +156,13 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
     		}
     	}
     }
-
+    /*
     private void playVideo(Uri uri){
         video.requestFocus();
         video.setMediaController(new MediaController(this));
         video.setVideoURI(uri);
         video.start();
-    }
+    }*/
     public int getSenderID() {
 		return this._senderID;
 	}
@@ -192,6 +192,7 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 		switch (message.what){
 			case R.id.btn_login :{
 				if (nico.isLogin()){
+	    			new NicoVideoView(video, nico.getCookieStroe()).loadUrl();
 					tvPassword.setText("番組ID");
 					password.setText("lv");
 					password.setInputType(InputType.TYPE_CLASS_NUMBER);
