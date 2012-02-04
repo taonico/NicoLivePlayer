@@ -87,6 +87,9 @@ public class NicoRequest {
 	public boolean isLoginAlert(){
 		return this._isLoginAlert;
 	}
+	public CookieStore getCookieStroe(){
+		return this._cookieStore;
+	}
 	
 	public String login (String mail, String password) {
 		
