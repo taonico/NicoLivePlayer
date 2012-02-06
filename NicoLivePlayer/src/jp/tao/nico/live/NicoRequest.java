@@ -87,7 +87,7 @@ public class NicoRequest {
 	public boolean isLoginAlert(){
 		return this._isLoginAlert;
 	}
-	public CookieStore getCookieStroe(){
+	public CookieStore getCookieStore(){
 		return this._cookieStore;
 	}
 	

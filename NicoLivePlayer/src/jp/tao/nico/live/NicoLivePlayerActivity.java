@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.MediaController;
@@ -43,6 +44,7 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 	private NicoRequest nico = null;
 	private NicoSocket nicosocket = null;
 	private int _senderID = 0;
+	private WebViewClient client = null;
 	
 	
     /** Called when the activity is first created. */
@@ -192,7 +194,9 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 		switch (message.what){
 			case R.id.btn_login :{
 				if (nico.isLogin()){
-	    			new NicoVideoView(video, nico.getCookieStroe()).loadUrl();
+	    			NicoWebView nvv = new NicoWebView(video, nico.getCookieStore());
+	    			nvv.loadUrl();
+	    			this.client =nvv.getWebViewClient(); 
 					tvPassword.setText("番組ID");
 					password.setText("lv");
 					password.setInputType(InputType.TYPE_CLASS_NUMBER);
