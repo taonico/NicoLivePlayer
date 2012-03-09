@@ -11,6 +11,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class NicoMessage {
@@ -46,6 +47,9 @@ public class NicoMessage {
 	
 	public String getNodeValue(InputStream is, String elementsName) throws SAXException, IOException, ParserConfigurationException{
 		return getNodeValue(getDocument(is), elementsName);
+	}
+	public NodeList getNodeList(Document document, String elementsName){
+		return document.getElementsByTagName(elementsName);
 	}
 	public String getNodeValue(Document document, String elementsName){
 		return document.getElementsByTagName(elementsName).item(0).getTextContent();

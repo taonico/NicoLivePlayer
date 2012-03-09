@@ -17,6 +17,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
@@ -29,6 +30,7 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 public class NicoRequest {
 	//ログインAPI
@@ -51,6 +53,7 @@ public class NicoRequest {
 	private NicoMessage nicoMessage = null;
 	//Login -> getplayerstatus
 	private CookieStore _cookieStore;
+	private String _loginCookie = null;
 	
 	//Alert server
 	private String _alertaddr = null;
@@ -65,6 +68,7 @@ public class NicoRequest {
 	private boolean _isLogin = false;
 	//Login Alert
 	private boolean _isLoginAlert = false;
+	private NodeList _community_id = null;
 	
 	
 	public NicoRequest (NicoMessage nicoMesssage){
@@ -89,6 +93,12 @@ public class NicoRequest {
 	}
 	public CookieStore getCookieStore(){
 		return this._cookieStore;
+	}
+	public String getLoginCookie(){
+		if (isLogin() && this._loginCookie.toString().equals("")){
+			getLoginCookie(this._cookieStore);
+		}
+		return this._loginCookie;
 	}
 	
 	public String login (String mail, String password) {
@@ -134,6 +144,28 @@ public class NicoRequest {
 			_isLogin = false;
 			return "ログインに失敗しました";
 		}
+	}
+	public String getLoginCookie(CookieStore cookieStore){
+		if ( cookieStore != null ) {
+			List<Cookie> cookies = cookieStore.getCookies();
+			if (!cookies.isEmpty()) {
+				for (int i = 0; i < cookies.size(); i++) {
+					if(isNicoVideoUserSession(cookies.get(i))){
+						Cookie cookie = cookies.get(i);
+						return cookie.getName() + "=" + cookie.getValue() + "; domain=" + cookie.getDomain();
+					}
+				}
+			}
+		}
+		return null;
+	}
+	private boolean isNicoVideoUserSession(Cookie cookie){
+		if (cookie != null) {
+			if (cookie.getDomain().equals(".nicovideo.jp") && cookie.getName().equals("user_session")){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String loginAlert(String mail, String password){
@@ -235,9 +267,10 @@ public class NicoRequest {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
 				Document doc = nicoMessage.getDocument(getInputStream(response));
 				this._playerStatusData  = nicoMessage.getPlayerStatusData(doc);
-				this._addr = (nicoMessage.getNodeValue(doc, "addr"));
+				this._addr = nicoMessage.getNodeValue(doc, "addr");
 				this.set_port(nicoMessage.getNodeValue(doc, "port"));
-				this._thread = (nicoMessage.getNodeValue(doc, "thread"));
+				this._thread = nicoMessage.getNodeValue(doc, "thread");
+				this._community_id = nicoMessage.getNodeList(doc, "community_id");
 			}
 			
 		}catch (Exception e){
