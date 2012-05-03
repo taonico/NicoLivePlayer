@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:text="Login"
         android:visibility="visible"
-        />
+        android:onClick="onLoginButtonClick"/>
     	
     	<Button
         android:id="@+id/btn_loginAlert"
@@ -82,11 +82,5 @@
         android:layout_height="wrap_content"
         android:text="responce"
         android:scrollHorizontally="true" />
-
-    	<WebView 
-    	    android:id="@+id/videoView"
-    		android:layout_width="match_parent"
-    		android:layout_height="match_parent"
-    		/>
     	
 </LinearLayout>

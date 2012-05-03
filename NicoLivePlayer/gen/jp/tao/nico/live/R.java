@@ -19,6 +19,7 @@ public final class R {
         public static final int btn_login=0x7f050004;
         public static final int btn_loginAlert=0x7f050005;
         public static final int ed_response=0x7f050008;
+        public static final int ed_response_main=0x7f05000a;
         public static final int et_mail=0x7f050001;
         public static final int et_password=0x7f050003;
         public static final int tv_email=0x7f050000;

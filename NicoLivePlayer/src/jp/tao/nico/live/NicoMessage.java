@@ -19,6 +19,8 @@ public class NicoMessage {
 	private final String _chatMessage = "<thread thread=\"{0}\" version=\"20061206\" res_from=\"-1\"/>\0";
 	private final Pattern chatpattern = Pattern.compile("<chat.*>(.*,.*,.*)</chat>");
 	private final Pattern _commentChatpattern = Pattern.compile("<chat .* no=\"([0-9]*?)\" .* user_id=\"(.*?)\" .*>(.*)</chat>"); 
+	private final Pattern _liveLvPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(lv[0-9]+)");
+	private final Pattern _liveComuPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(co[0-9]+)");
 	
 	public NicoMessage(){
 		
@@ -43,6 +45,20 @@ public class NicoMessage {
 		}else{
 			return new String[] { "", "", "" };
 		}
+	}
+	
+	public String getLiveID (String url){
+		Matcher matcher = _liveLvPattern.matcher(url);
+		if(matcher.matches()){
+			return matcher.group(1);
+		}
+		
+		matcher = _liveComuPattern.matcher(url);
+		if (matcher.matches()){
+			return matcher.group(1);
+		}
+		
+		return "";
 	}
 	
 	public String getNodeValue(InputStream is, String elementsName) throws SAXException, IOException, ParserConfigurationException{

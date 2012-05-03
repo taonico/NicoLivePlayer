@@ -4,6 +4,10 @@ package jp.tao.nico.live;
 import java.util.List;
 import org.apache.http.client.CookieStore;
 import org.apache.http.cookie.Cookie;
+
+import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Message;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebSettings;
@@ -11,13 +15,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public class NicoWebView {
-	private final static String CONNECT_URL = "http://sp.live.nicovideo.jp/";
+	public final static String CONNECT_URL = "http://sp.live.nicovideo.jp/";
 	private String _loadUrl = "";
 	private WebView webview = null;
 	private CookieSyncManager cookieSyncManager = null;
 	private CookieManager cookieManager = null;
 	private WebViewClient client = null;
 	private String _loginCookie =null;
+	private Handler handler= null;
+	public final static int ON_PAGE_STARTED = 0;
 	
 	public NicoWebView(String loginCookie) {
 		this._loginCookie = loginCookie;
@@ -55,6 +61,9 @@ public class NicoWebView {
 
 		this.client = new NicoWebViewClient();
 		this.webview.setWebViewClient(this.client);
+	}
+	public void setHandler(final Handler handler){
+		this.handler = handler;
 	}
 	public WebViewClient getWebViewClient(){
 		return this.client;
@@ -110,6 +119,11 @@ public class NicoWebView {
     	public void onPageFinished(WebView wv, String url){
     		setCookieManeger();
     		setCookie();
+    	}
+    	@Override
+    	public void onPageStarted(WebView view, String url, Bitmap favicon){
+    		Message message = handler.obtainMessage(ON_PAGE_STARTED, url);
+			handler.sendMessage(message);
     	}
     	
     	private void setCookie(){

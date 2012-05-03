@@ -3,7 +3,7 @@ package jp.tao.nico.live;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.net.Uri;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -11,13 +11,9 @@ import android.text.InputType;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.MediaController;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 public class NicoLivePlayerActivity extends Activity implements OnClickListener, OnReceiveListener, Handler.Callback {
 	private EditText email; 
@@ -37,14 +33,11 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 	private EditText etResponse;
 	//表示をPasswordから番組IDに書き換えています
 	private TextView tvPassword;
-	//ビデオ表示したい
-	private WebView video;
 	
 	private NicoMessage nicoMesssage = null;
 	private NicoRequest nico = null;
 	private NicoSocket nicosocket = null;
 	private int _senderID = 0;
-	private WebViewClient client = null;
 	
 	
     /** Called when the activity is first created. */
@@ -56,7 +49,7 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
         email = (EditText)findViewById(R.id.et_mail);
         password = (EditText)findViewById(R.id.et_password);
         btnLogin = (Button)findViewById(R.id.btn_login);
-        btnLogin.setOnClickListener(this);
+        //btnLogin.setOnClickListener(this);
         btnLoginAlert = (Button)findViewById(R.id.btn_loginAlert);
         btnLoginAlert.setOnClickListener(this);
         btnLiveNo = (Button)findViewById(R.id.btnLive);
@@ -66,28 +59,31 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
         etLiveNo = (EditText)findViewById(R.id.et_password);
         etResponse = (EditText)findViewById(R.id.ed_response);
         tvPassword = (TextView)findViewById(R.id.tv_password);
-        video = (WebView)findViewById(R.id.videoView);
         
         //
         nicoMesssage = new NicoMessage();
         nico = new NicoRequest(nicoMesssage);
     }
     
+    public void onLoginButtonClick(View v){
+    	setSenderID(R.id.btn_login);
+		key();    			
+		final Handler handler = new Handler(this);
+		
+		new Thread((new Runnable(){
+			public void run() {
+				nico.login(email.getText().toString(),password.getText().toString());
+				Message message = handler.obtainMessage(R.id.btn_login);
+				handler.sendMessage(message);
+			}})).start();
+		
+		return;
+    }
+    
     public void onClick(View v){
     	switch (v.getId()) {
     		case R.id.btn_login :{
-    			setSenderID(R.id.btn_login);
-    			key();    			
-    			final Handler handler = new Handler(this);
     			
-    			new Thread((new Runnable(){
-    				public void run() {
-    					nico.login(email.getText().toString(),password.getText().toString());
-    					Message message = handler.obtainMessage(R.id.btn_login);
-    					handler.sendMessage(message);
-    				}})).start();
-    			
-    			return;
 			}
     		
     		case R.id.btnLive : {
@@ -194,9 +190,6 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 		switch (message.what){
 			case R.id.btn_login :{
 				if (nico.isLogin()){
-	    			NicoWebView nvv = new NicoWebView(video, nico.getCookieStore());
-	    			nvv.loadUrl();
-	    			this.client =nvv.getWebViewClient(); 
 					tvPassword.setText("番組ID");
 					password.setText("lv");
 					password.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -204,6 +197,12 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 					btnLoginAlert.setVisibility(View.GONE);
 					btnLiveNo.setVisibility(View.VISIBLE);
 					etResponse.setText("ログインしました");
+					
+					// インテントのインスタンス生
+					Intent intent = new Intent(this, MainActivity.class);
+					// 次画面のアクティビティ起動
+					intent.putExtra("LoginCookie", nico.getLoginCookie());
+					startActivity(intent);
 				}else{
 					etResponse.setText("ログインできませんでした");
 				}

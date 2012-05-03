@@ -3,6 +3,7 @@ package jp.tao.nico.live;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.net.ssl.HostnameVerifier;
@@ -23,6 +24,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
 import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
@@ -53,7 +55,7 @@ public class NicoRequest {
 	private NicoMessage nicoMessage = null;
 	//Login -> getplayerstatus
 	private CookieStore _cookieStore;
-	private String _loginCookie = null;
+	private String _loginCookie = "";
 	
 	//Alert server
 	private String _alertaddr = null;
@@ -95,10 +97,26 @@ public class NicoRequest {
 		return this._cookieStore;
 	}
 	public String getLoginCookie(){
-		if (isLogin() && this._loginCookie.toString().equals("")){
-			getLoginCookie(this._cookieStore);
+		if (isLogin() && _loginCookie.toString().equals("")){
+			_loginCookie = getLoginCookie(this._cookieStore);
 		}
-		return this._loginCookie;
+		return _loginCookie;
+	}
+	public void setLoginCookie(String loginCookie){
+		_loginCookie = loginCookie.split("=")[1];
+		setCookieStore();
+	}
+	private void setCookieStore(){
+		_cookieStore = new BasicCookieStore();
+		_cookieStore.addCookie(getCookie());
+	}
+	private Cookie getCookie(){
+		// Cookieを作成
+        BasicClientCookie cookie = new BasicClientCookie("user_session", _loginCookie);
+        cookie.setDomain("nicovideo.jp");
+        cookie.setPath("/");
+        
+        return cookie;
 	}
 	
 	public String login (String mail, String password) {
