@@ -56,6 +56,7 @@
         android:layout_height="wrap_content"
         android:text="Login Alert"
         android:visibility="visible"
+        android:onClick="onLoginAlertButtonClick"
         />
     	
     	<Button
@@ -64,6 +65,7 @@
     	    android:layout_height="wrap_content"
     	    android:text="Live" 
     	    android:visibility="gone"
+    	    android:onClick="onLiveButtonClick"
     	    />
     	
     	<Button
@@ -72,6 +74,7 @@
     	    android:layout_height="wrap_content"
     	    android:text="Disconnect"
     	    android:visibility="gone"
+    	    android:onClick="onDisconnectButtonClick"
     	     />
     	
 	</LinearLayout>

@@ -15,7 +15,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class NicoLivePlayerActivity extends Activity implements OnClickListener, OnReceiveListener, Handler.Callback {
+/**
+ * @author tao
+ *
+ */
+public class NicoLivePlayerActivity extends Activity {
 	private EditText email; 
 	private EditText password;
 	//通常のログインをする
@@ -51,11 +55,8 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
         btnLogin = (Button)findViewById(R.id.btn_login);
         //btnLogin.setOnClickListener(this);
         btnLoginAlert = (Button)findViewById(R.id.btn_loginAlert);
-        btnLoginAlert.setOnClickListener(this);
         btnLiveNo = (Button)findViewById(R.id.btnLive);
-        btnLiveNo.setOnClickListener(this);
         btnDisconnect = (Button)findViewById(R.id.btnDisconnect);
-        btnDisconnect.setOnClickListener(this);
         etLiveNo = (EditText)findViewById(R.id.et_password);
         etResponse = (EditText)findViewById(R.id.ed_response);
         tvPassword = (TextView)findViewById(R.id.tv_password);
@@ -65,10 +66,13 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
         nico = new NicoRequest(nicoMesssage);
     }
     
+    /**
+     * ログイン処理
+     */
     public void onLoginButtonClick(View v){
     	setSenderID(R.id.btn_login);
 		key();    			
-		final Handler handler = new Handler(this);
+		final Handler handler = new Handler(new LoginHandler());
 		
 		new Thread((new Runnable(){
 			public void run() {
@@ -76,167 +80,148 @@ public class NicoLivePlayerActivity extends Activity implements OnClickListener,
 				Message message = handler.obtainMessage(R.id.btn_login);
 				handler.sendMessage(message);
 			}})).start();
-		
+		new Intent(this, MainActivity.class);
 		return;
     }
-    
-    public void onClick(View v){
-    	switch (v.getId()) {
-    		case R.id.btn_login :{
-    			
+    class LoginHandler implements Handler.Callback{
+		public boolean handleMessage(Message arg0) {
+			if (nico.isLogin()){
+				tvPassword.setText("番組ID");
+				password.setText("lv");
+				password.setInputType(InputType.TYPE_CLASS_NUMBER);
+				btnLogin.setVisibility(View.GONE);
+				btnLoginAlert.setVisibility(View.GONE);
+				btnLiveNo.setVisibility(View.VISIBLE);
+				etResponse.setText("ログインしました");
+				
+				// インテントのインスタンス生
+				Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+				// 次画面のアクティビティ起動
+				intent.putExtra("LoginCookie", nico.getLoginCookie());
+				startActivity(intent);
+			}else{
+				etResponse.setText("ログインできませんでした");
 			}
-    		
-    		case R.id.btnLive : {
-    			setSenderID(R.id.btnLive);
-    			key();
-    			
-    			final Handler handler = new Handler(this);
-				nicosocket = new NicoSocket(nicoMesssage);
-				nicosocket.setOnReceiveListener(this);
-    			
-    			new Thread(new Runnable(){
-					public void run() {
-						nico.getPlayerStatus(etLiveNo.getText().toString());
-						nicosocket.connectCommentServer(nico.getAddress(), nico.getPort(), nico.getThread());
-		    			Message message = handler.obtainMessage(R.id.btnLive);
-    					handler.sendMessage(message);
-					}}).start();
-    			
-    			return;
-    		}
-    		
-    		case R.id.btn_loginAlert : {
-    			key();
-    			setSenderID(R.id.btn_loginAlert);
-    				
-    			final Handler handler = new Handler(this);
-    			nicosocket = new NicoSocket(nicoMesssage);
-				nicosocket.setOnReceiveListener(this);
-    			
-    			new Thread (new Runnable(){
-					public void run() {
-						nico.loginAlert(email.getText().toString(),password.getText().toString());
-						nicosocket.connectCommentServer(nico.getAlertAddress(), nico.getAlertPort(), nico.getAlertThread());
-						Message message = handler.obtainMessage(R.id.btn_loginAlert);
-    					handler.sendMessage(message);
-					}}).start();
-    			
-    			return;
-    		}
-    		
-    		case R.id.btnDisconnect : {
-    			switch (getSenderID()){
-    			
-    			case R.id.btnLive : {
-    				if(nicosocket.isConnected()){
-        				if(nicosocket.closeSockt()){
-        					etResponse.setText("disconnected");
-        					btnLiveNo.setVisibility(View.VISIBLE);
-        					btnDisconnect.setVisibility(View.GONE);
-        					//video.stopPlayback();
-        				}
-        			}
-        			return;
+			return true;
+		}
+    }
+    
+    /**
+     * アラートログイン処理
+     */
+    public void onLoginAlertButtonClick(View v){
+    	key();
+		setSenderID(R.id.btn_loginAlert);
+		
+		LoginAlertHandler loginAlertHandler = new LoginAlertHandler();
+		final Handler handler = new Handler(loginAlertHandler);
+		nicosocket = new NicoSocket(nicoMesssage);
+		nicosocket.setOnReceiveListener(loginAlertHandler);
+		
+		new Thread (new Runnable(){
+			public void run() {
+				nico.loginAlert(email.getText().toString(),password.getText().toString());
+				nicosocket.connectCommentServer(nico.getAlertAddress(), nico.getAlertPort(), nico.getAlertThread());
+				Message message = handler.obtainMessage(R.id.btn_loginAlert);
+				handler.sendMessage(message);
+			}}).start();
+    }
+    class LoginAlertHandler implements Handler.Callback, OnReceiveListener{
+		public boolean handleMessage(Message msg) {
+			if(nicosocket.isConnected()){
+				new Thread(nicosocket.getAlertSocketRun()).start();
+				btnLiveNo.setVisibility(View.GONE);
+				btnLogin.setVisibility(View.GONE);
+				btnLoginAlert.setVisibility(View.GONE);
+    			btnDisconnect.setVisibility(View.VISIBLE);
+			}else{
+				etResponse.setText("アラートログインに失敗しました");
+			}
+			
+			return true;
+		}
+
+		public void onReceive(String receivedMessege) {
+			etResponse.append(receivedMessege + "\n");
+		}
+    }
+    
+    /**
+     * 生放送コメント取得処理
+     */
+    public void onLiveButtonClick(View v){
+    	setSenderID(R.id.btnLive);
+		key();
+		LiveHandler liveHandler = new LiveHandler();
+		final Handler handler = new Handler(liveHandler);
+		nicosocket = new NicoSocket(nicoMesssage);
+		nicosocket.setOnReceiveListener(liveHandler);
+		
+		new Thread(new Runnable(){
+			public void run() {
+				nico.getPlayerStatus(etLiveNo.getText().toString());
+				nicosocket.connectCommentServer(nico.getAddress(), nico.getPort(), nico.getThread());
+    			Message message = handler.obtainMessage(R.id.btnLive);
+				handler.sendMessage(message);
+			}}).start();
+    }
+    class LiveHandler implements Handler.Callback, OnReceiveListener{
+		public boolean handleMessage(Message msg) {
+			if (nicosocket.isConnected()){
+				new Thread(nicosocket).start();	
+    			btnLiveNo.setVisibility(View.GONE);
+    			btnDisconnect.setVisibility(View.VISIBLE);
+			}else{
+				etResponse.setText("番組に接続できませんでした");
+			}
+			
+			return true;
+		}
+
+		public void onReceive(String receivedMessege) {
+			etResponse.append(receivedMessege + "\n");
+		}
+    }
+    
+    /**
+     * コメントサーバ切断処理
+     */
+    public void onDisconnectButtonClick(View v){
+    	switch (getSenderID()){
+
+    	case R.id.btnLive : {
+    		if(nicosocket.isConnected()){
+    			if(nicosocket.closeSockt()){
+    				etResponse.setText("disconnected");
+    				btnLiveNo.setVisibility(View.VISIBLE);
+    				btnDisconnect.setVisibility(View.GONE);
     			}
-    			case R.id.btn_loginAlert : {
-    				if(nicosocket.isConnected()){
-        				if(nicosocket.closeSockt()){
-        					etResponse.setText("disconnected");
-        					btnLogin.setVisibility(View.VISIBLE);
-        					btnLoginAlert.setVisibility(View.VISIBLE);
-        					btnDisconnect.setVisibility(View.GONE);
-        				}
-        			}
-        			return;
-    			}
-    			}
-    			
     		}
+    		return;
+    	}
+    	case R.id.btn_loginAlert : {
+    		if(nicosocket.isConnected()){
+    			if(nicosocket.closeSockt()){
+    				etResponse.setText("disconnected");
+    				btnLogin.setVisibility(View.VISIBLE);
+    				btnLoginAlert.setVisibility(View.VISIBLE);
+    				btnDisconnect.setVisibility(View.GONE);
+    			}
+    		}
+    		return;
+    	}
     	}
     }
-    /*
-    private void playVideo(Uri uri){
-        video.requestFocus();
-        video.setMediaController(new MediaController(this));
-        video.setVideoURI(uri);
-        video.start();
-    }*/
+    
     public int getSenderID() {
 		return this._senderID;
 	}
     public void setSenderID(int senderID){
     	this._senderID = senderID;
     }
-    public void onReceive(String receivedMessege){
-    	switch (this.getSenderID()){
-    		case R.id.btnLive :{
-    			etResponse.append(receivedMessege + "\n");
-    			return;
-    		}
-    		
-    		case R.id.btn_loginAlert : {
-    			etResponse.append(receivedMessege + "\n");
-    			return;
-    		}
-    	}
-    }
     
     private void key(){
     	InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         mgr.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
-
-	public boolean handleMessage(Message message) {
-		switch (message.what){
-			case R.id.btn_login :{
-				if (nico.isLogin()){
-					tvPassword.setText("番組ID");
-					password.setText("lv");
-					password.setInputType(InputType.TYPE_CLASS_NUMBER);
-					btnLogin.setVisibility(View.GONE);
-					btnLoginAlert.setVisibility(View.GONE);
-					btnLiveNo.setVisibility(View.VISIBLE);
-					etResponse.setText("ログインしました");
-					
-					// インテントのインスタンス生
-					Intent intent = new Intent(this, MainActivity.class);
-					// 次画面のアクティビティ起動
-					intent.putExtra("LoginCookie", nico.getLoginCookie());
-					startActivity(intent);
-				}else{
-					etResponse.setText("ログインできませんでした");
-				}
-				return true;
-			}
-			
-			case R.id.btnLive : {
-    			if (nicosocket.isConnected()){
-    				new Thread(nicosocket).start();	
-        			btnLiveNo.setVisibility(View.GONE);
-        			btnDisconnect.setVisibility(View.VISIBLE);
-        			//playVideo(uri);
-    			}else{
-    				etResponse.setText("番組に接続できませんでした");
-    			}
-    			
-    			return true;
-    		}
-			
-			case R.id.btn_loginAlert : {
-				if(nicosocket.isConnected()){
-					new Thread(nicosocket.getAlertSocketRun()).start();
-					btnLiveNo.setVisibility(View.GONE);
-					btnLogin.setVisibility(View.GONE);
-					btnLoginAlert.setVisibility(View.GONE);
-        			btnDisconnect.setVisibility(View.VISIBLE);
-				}else{
-    				etResponse.setText("アラートログインに失敗しました");
-    			}
-				
-				return true;
-			}
-		}
-		
-		return false;
-	}
 }

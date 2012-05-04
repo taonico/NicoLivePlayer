@@ -72,7 +72,10 @@ public class NicoRequest {
 	private boolean _isLoginAlert = false;
 	private NodeList _community_id = null;
 	
-	
+	/**
+	 * NicoRequest
+	 * @param nicoMesssage NicoMessageのインスタンス
+	 */
 	public NicoRequest (NicoMessage nicoMesssage){
 		this.nicoMessage = nicoMesssage;
 		
@@ -86,22 +89,36 @@ public class NicoRequest {
 		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
 		HttpProtocolParams.setContentCharset(httpParams, HTTP.UTF_8);
 	}
-	
+	/**
+	 * ニコニコ動画にログイン成功
+	 */
 	public boolean isLogin(){
 		return this._isLogin;
 	}
+	/**
+	 * ニコ生放送アラートにログイン成功
+	 */
 	public boolean isLoginAlert(){
 		return this._isLoginAlert;
 	}
 	public CookieStore getCookieStore(){
 		return this._cookieStore;
 	}
+	
+	/**
+	 * ログインクッキーを返します
+	 * @return 例）user_session=user_session_18180000_265723068462200000;domain=.nicovideo.jp;Path=/
+	 */
 	public String getLoginCookie(){
 		if (isLogin() && _loginCookie.toString().equals("")){
 			_loginCookie = getLoginCookie(this._cookieStore);
 		}
 		return _loginCookie;
 	}
+	/**
+	 * ログインクッキーを設定します
+	 * 例）user_session=user_session_18180000_265723068462200000;domain=.nicovideo.jp;Path=/
+	 */
 	public void setLoginCookie(String loginCookie){		
 		setCookieStore(loginCookie.split(";")[0].split("=")[1]);
 		_loginCookie = getLoginCookie(this._cookieStore);
@@ -119,6 +136,12 @@ public class NicoRequest {
         return cookie;
 	}
 	
+	/**
+	 * ニコニコ動画へのログイン処理
+	 * @param mail
+	 * @param password
+	 * @return 
+	 */
 	public String login (String mail, String password) {
 		
 		try{
@@ -163,6 +186,12 @@ public class NicoRequest {
 			return "ログインに失敗しました";
 		}
 	}
+	
+	/**
+	 * ログインクッキーを返します
+	 * @param cookieStore ニコニコ動画サイトのCookie
+	 * @return 例）user_session=user_session_18180000_265723068462200000;domain=.nicovideo.jp;Path=/
+	 */
 	public String getLoginCookie(CookieStore cookieStore){
 		if ( cookieStore != null ) {
 			List<Cookie> cookies = cookieStore.getCookies();
@@ -186,6 +215,12 @@ public class NicoRequest {
 		return false;
 	}
 	
+	/**
+	 * ニコ生アラートへのログイン処理
+	 * @param mail
+	 * @param password
+	 * @return 
+	 */
 	public String loginAlert(String mail, String password){
 		String ticket = null;
 		
@@ -258,16 +293,29 @@ public class NicoRequest {
 		return null;
 	}
 
+	/**
+	 * @return アラートサーバのアドレス
+	 */
 	public String getAlertAddress() {
 		return _alertaddr;
 	}
+	/**
+	 * @return アラートサーバのポート番号
+	 */
 	public int getAlertPort() {
 		return _alertport;
 	}
+	/**
+	 * @return アラートサーバのスレッド番号
+	 */
 	public String getAlertThread() {
 		return _alertthread;
 	}
 
+	/**
+	 * @param lv 放送番号またはコミュニティ番号
+	 * @return PlayerStatusのデータ
+	 */
 	public PlayerStatusData getPlayerStatus(String lv) {
 		
 		try {
@@ -275,10 +323,7 @@ public class NicoRequest {
 			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
 			client.setCookieStore(_cookieStore);
 		
-			//Uri.Builder uriBuilder = new Uri.Builder();
-			//uriBuilder.path(_getplayerstatus);
-			//uriBuilder.appendQueryParameter("v", lv);
-			HttpGet get = new HttpGet(_getplayerstatus + "?v=" + lv);//uriBuilder.build().toString());
+			HttpGet get = new HttpGet(_getplayerstatus + "?v=" + lv);
 
 			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), get);
 		
@@ -292,15 +337,21 @@ public class NicoRequest {
 			}
 			
 		}catch (Exception e){
-        	return null; //e.getMessage();
+        	return null;
         }
 		
 		return this._playerStatusData;
 	}
 
+	/**
+	 * @return コメントサーバのアドレス
+	 */
 	public String getAddress() {
 		return _addr;
 	}
+	/**
+	 * @return コメントサーバのポート番号
+	 */
 	public int getPort() {
 		return _port;
 	}
@@ -310,6 +361,9 @@ public class NicoRequest {
 	private void set_alertport(String port) {
 		this._alertport = Integer.parseInt(port);
 	}
+	/**
+	 * @return コメントサーバのスレッド
+	 */
 	public String getThread() {
 		return _thread;
 	}

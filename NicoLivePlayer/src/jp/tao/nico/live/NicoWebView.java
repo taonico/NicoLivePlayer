@@ -22,7 +22,7 @@ public class NicoWebView {
 	private CookieManager cookieManager = null;
 	private WebViewClient client = null;
 	private String _loginCookie =null;
-	private Handler handler= null;
+	private Handler onPageStartedHandler = null;
 	public final static int ON_PAGE_STARTED = 0;
 	
 	public NicoWebView(String loginCookie) {
@@ -62,8 +62,13 @@ public class NicoWebView {
 		this.client = new NicoWebViewClient();
 		this.webview.setWebViewClient(this.client);
 	}
-	public void setHandler(final Handler handler){
-		this.handler = handler;
+	
+	/**
+	 * ページの読み込みを通知するハンドラを登録する
+	 * @param onPageStartedHandler
+	 */
+	public void setOnPageStartedHandler(final Handler onPageStartedHandler){
+		this.onPageStartedHandler = onPageStartedHandler;
 	}
 	public WebViewClient getWebViewClient(){
 		return this.client;
@@ -120,10 +125,15 @@ public class NicoWebView {
     		setCookieManeger();
     		setCookie();
     	}
+    	
+    	/** 
+    	 * ページの読み込みを通知する
+    	 * @see android.webkit.WebViewClient#onPageStarted(android.webkit.WebView, java.lang.String, android.graphics.Bitmap)
+    	 */
     	@Override
     	public void onPageStarted(WebView view, String url, Bitmap favicon){
-    		Message message = handler.obtainMessage(ON_PAGE_STARTED, url);
-			handler.sendMessage(message);
+    		Message message = onPageStartedHandler.obtainMessage(ON_PAGE_STARTED, url);
+    		onPageStartedHandler.sendMessage(message);
     	}
     	
     	private void setCookie(){

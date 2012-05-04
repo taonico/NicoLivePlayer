@@ -10,7 +10,7 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class MainActivity extends Activity implements OnReceiveListener, Handler.Callback{
+public class MainActivity extends Activity {
 	private NicoMessage nicoMesssage = null;
 	private NicoRequest nicoRequest = null;
 	private NicoSocket nicosocket = null;
@@ -32,34 +32,53 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
         
         nicoMesssage = new NicoMessage();
         nicoRequest = new NicoRequest(nicoMesssage);
+        //クッキーを受け取る
         nicoRequest.setLoginCookie(getIntent().getStringExtra("LoginCookie"));
         NicoWebView nwv = new NicoWebView(nicoRequest.getLoginCookie(), video);
+        
+        //ニコ生ページをロードする
         nwv.loadUrl();
         url = NicoWebView.CONNECT_URL;
-        final Handler handler = new Handler(this);
-        nwv.setHandler(handler);
+        //WebViewがページを読み込みを開始した時のイベント通知ハンドラを設定
+        nwv.setOnPageStartedHandler(new Handler(new ChangedUrlHandler()));
+    }
+    /**
+     * WebViewのURL変更時の処理
+     */
+    class ChangedUrlHandler implements Handler.Callback {
+    	public boolean handleMessage(Message message) {
+    		switch (message.what){
+    		case NicoWebView.ON_PAGE_STARTED:
+    			if (isChangedUrl(message.obj.toString())){
+    				getComment();
+    				return true;
+    			}
+    			break;
+    		}
+
+    		return false;
+    	}
+    }
+    private boolean isChangedUrl(String url){
+    	if (!this.url.equals(url)){
+    		this.url = url;
+    		return true;
+    	}
+    	
+    	return false;
     }
     
-    public boolean handleMessage(Message message) {
-		switch (message.what){
-		case NicoWebView.ON_PAGE_STARTED:
-			if (isChangedUrl(message.obj.toString())){
-				getComment();
-				return true;
-			}
-			break;
-		}
-		
-		return false;
-    }
-    
+    /**
+     * 放送ページのコメント取得処理
+     */
     private void getComment() {
     	_liveID = nicoMesssage.getLiveID(url);
     	if (_liveID.equals("")){ return; }
     	
-    	final Handler handler = new Handler(new CommentHandler());
+    	CommentHandler commentHandler = new CommentHandler();
+    	final Handler handler = new Handler(commentHandler);
 		nicosocket = new NicoSocket(nicoMesssage);
-		nicosocket.setOnReceiveListener(this);
+		nicosocket.setOnReceiveListener(commentHandler);
 		
 		new Thread(new Runnable(){
 			public void run() {
@@ -69,30 +88,7 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
 				handler.sendMessage(message);
 			}}).start();
 	}
-
-	private boolean isChangedUrl(String url){
-    	if (!this.url.equals(url)){
-    		this.url = url;
-    		return true;
-    	}
-    	
-    	return false;
-    }
-	
-	public void onReceive(String receivedMessege){
-		etResponse.append(receivedMessege + "\n");
-		return;
-    }
-
-	public void setSenderID(int senderID) {
-
-	}
-
-	public int getSenderID() {
-		return 0;
-	}
-	
-	class CommentHandler implements Handler.Callback{
+    class CommentHandler implements Handler.Callback, OnReceiveListener{
 		public boolean handleMessage(Message msg) {
 			if (nicosocket.isConnected()){
 				new Thread(nicosocket).start();	
@@ -102,5 +98,10 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
 			
 			return true;
 		}
+		
+		public void onReceive(String receivedMessege){
+			etResponse.append(receivedMessege + "\n");
+	    }
 	}
+
 }
