@@ -48,15 +48,6 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
 				return true;
 			}
 			break;
-			
-		case R.id.btnLive:
-			if (nicosocket.isConnected()){
-				new Thread(nicosocket).start();	
-			}else{
-				etResponse.setText("番組に接続できませんでした");
-			}
-			
-			return true;
 		}
 		
 		return false;
@@ -66,7 +57,7 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
     	_liveID = nicoMesssage.getLiveID(url);
     	if (_liveID.equals("")){ return; }
     	
-    	final Handler handler = new Handler(this);
+    	final Handler handler = new Handler(new CommentHandler());
 		nicosocket = new NicoSocket(nicoMesssage);
 		nicosocket.setOnReceiveListener(this);
 		
@@ -74,7 +65,7 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
 			public void run() {
 				nicoRequest.getPlayerStatus(_liveID);
 				nicosocket.connectCommentServer(nicoRequest.getAddress(), nicoRequest.getPort(), nicoRequest.getThread());
-    			Message message = handler.obtainMessage(R.id.btnLive);
+    			Message message = handler.obtainMessage();
 				handler.sendMessage(message);
 			}}).start();
 	}
@@ -94,12 +85,22 @@ public class MainActivity extends Activity implements OnReceiveListener, Handler
     }
 
 	public void setSenderID(int senderID) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	public int getSenderID() {
-		// TODO Auto-generated method stub
 		return 0;
+	}
+	
+	class CommentHandler implements Handler.Callback{
+		public boolean handleMessage(Message msg) {
+			if (nicosocket.isConnected()){
+				new Thread(nicosocket).start();	
+			}else{
+				etResponse.setText("番組に接続できませんでした");
+			}
+			
+			return true;
+		}
 	}
 }

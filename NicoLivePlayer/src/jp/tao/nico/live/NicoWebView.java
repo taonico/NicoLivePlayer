@@ -84,7 +84,7 @@ public class NicoWebView {
 				for (int i = 0; i < cookies.size(); i++) {
 					if(isNicoVideoUserSession(cookies.get(i))){
 						Cookie cookie = cookies.get(i);
-						return cookie.getName() + "=" + cookie.getValue() + "; domain=" + cookie.getDomain();
+						return cookie.getName() + "=" + cookie.getValue() + ";domain=" + cookie.getDomain() + ";Path=/";
 					}
 				}
 			}

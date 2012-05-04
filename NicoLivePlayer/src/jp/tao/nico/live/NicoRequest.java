@@ -102,18 +102,18 @@ public class NicoRequest {
 		}
 		return _loginCookie;
 	}
-	public void setLoginCookie(String loginCookie){
-		_loginCookie = loginCookie.split("=")[1];
-		setCookieStore();
+	public void setLoginCookie(String loginCookie){		
+		setCookieStore(loginCookie.split(";")[0].split("=")[1]);
+		_loginCookie = getLoginCookie(this._cookieStore);
 	}
-	private void setCookieStore(){
+	private void setCookieStore(String loginCookie){
 		_cookieStore = new BasicCookieStore();
-		_cookieStore.addCookie(getCookie());
+		_cookieStore.addCookie(getCookie(loginCookie));
 	}
-	private Cookie getCookie(){
+	private Cookie getCookie(String loginCookie){
 		// Cookieを作成
-        BasicClientCookie cookie = new BasicClientCookie("user_session", _loginCookie);
-        cookie.setDomain("nicovideo.jp");
+        BasicClientCookie cookie = new BasicClientCookie("user_session", loginCookie);
+        cookie.setDomain(".nicovideo.jp");
         cookie.setPath("/");
         
         return cookie;
@@ -170,7 +170,7 @@ public class NicoRequest {
 				for (int i = 0; i < cookies.size(); i++) {
 					if(isNicoVideoUserSession(cookies.get(i))){
 						Cookie cookie = cookies.get(i);
-						return cookie.getName() + "=" + cookie.getValue() + "; domain=" + cookie.getDomain();
+						return cookie.getName() + "=" + cookie.getValue() + ";domain=" + cookie.getDomain() + ";Path=/";
 					}
 				}
 			}
