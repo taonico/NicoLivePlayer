@@ -105,7 +105,7 @@ public class NicoWebView {
 		return false;
 	}
 	
-	/*
+	/**
 	 *    NicoWebViewClient
 	 */
 	class NicoWebViewClient extends WebViewClient {

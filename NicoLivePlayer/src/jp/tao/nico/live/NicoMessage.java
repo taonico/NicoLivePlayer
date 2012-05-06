@@ -15,7 +15,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class NicoMessage {
-	//private Document document = null;
+
 	private final String _chatMessage = "<thread thread=\"{0}\" version=\"20061206\" res_from=\"-1\"/>\0";
 	private final Pattern chatpattern = Pattern.compile("<chat.*>(.*,.*,.*)</chat>");
 	private final Pattern _commentChatpattern = Pattern.compile("<chat .* no=\"([0-9]*?)\" .* user_id=\"(.*?)\" .*>(.*)</chat>"); 

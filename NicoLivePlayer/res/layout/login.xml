@@ -3,87 +3,76 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-    
 
-    	 
-        <TextView
+    <TextView
         android:id="@+id/tv_email"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="E-Mail"
         android:textAppearance="?android:attr/textAppearanceMedium" />
-        
-        <EditText
+
+    <EditText
         android:id="@+id/et_mail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textEmailAddress"
         android:text="" >
+    </EditText>
 
-		</EditText>
-		<TextView
+    <TextView
         android:id="@+id/tv_password"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Password"
         android:textAppearance="?android:attr/textAppearanceMedium" />
-		
-    	<EditText
+
+    <EditText
         android:id="@+id/et_password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
-        android:text=""
-         />
+        android:text="" />
 
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
 
-	<LinearLayout
-	    android:layout_width="fill_parent"
-    	android:layout_height="wrap_content"
-	    android:orientation="horizontal" >
-	    
-    	<Button
-        android:id="@+id/btn_login"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Login"
-        android:visibility="visible"
-        android:onClick="onLoginButtonClick"/>
-    	
-    	<Button
-        android:id="@+id/btn_loginAlert"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Login Alert"
-        android:visibility="visible"
-        android:onClick="onLoginAlertButtonClick"
-        />
-    	
-    	<Button
-    	    android:id="@+id/btnLive"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="wrap_content"
-    	    android:text="Live" 
-    	    android:visibility="gone"
-    	    android:onClick="onLiveButtonClick"
-    	    />
-    	
-    	<Button
-    	    android:id="@+id/btnDisconnect"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="wrap_content"
-    	    android:text="Disconnect"
-    	    android:visibility="gone"
-    	    android:onClick="onDisconnectButtonClick"
-    	     />
-    	
-	</LinearLayout>
-    	
-    	<EditText
+        <Button
+            android:id="@+id/btn_login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            android:visibility="visible" />
+
+        <Button
+            android:id="@+id/btn_loginAlert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login Alert"
+            android:visibility="visible" />
+
+        <Button
+            android:id="@+id/btnLive"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Live"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnDisconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disconnect"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <EditText
         android:id="@+id/ed_response"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="responce"
-        android:scrollHorizontally="true" />
-    	
+        android:layout_weight="0.91"
+        android:scrollHorizontally="true"
+        android:text="responce" />
+
 </LinearLayout>
