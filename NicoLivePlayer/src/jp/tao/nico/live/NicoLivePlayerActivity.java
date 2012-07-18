@@ -12,6 +12,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -31,8 +34,6 @@ public class NicoLivePlayerActivity extends Activity {
 	private Button btnLiveNo;
 	//コメントサーバまたはアラートコメントサーバからの接続を切ります
 	private Button btnDisconnect;
-	//番組ID入力欄、じつはパスワード欄を再利用しています
-	private EditText etLiveNo;
 	//状態表示、コメント表示	
 	private EditText etResponse;
 	//表示をPasswordから番組IDに書き換えています
@@ -41,6 +42,8 @@ public class NicoLivePlayerActivity extends Activity {
 	private NicoMessage nicoMesssage = null;
 	private NicoRequest nico = null;
 	private NicoSocket nicosocket = null;
+	//
+	private NicoInfoDataFile nicoInfoDataFile = null;
 	private int _senderID = 0;
 	
 	
@@ -60,13 +63,54 @@ public class NicoLivePlayerActivity extends Activity {
         btnLiveNo.setOnClickListener(new Live());
         btnDisconnect = (Button)findViewById(R.id.btnDisconnect);
         btnDisconnect.setOnClickListener(new Disconnect());
-        etLiveNo = (EditText)findViewById(R.id.et_password);
         etResponse = (EditText)findViewById(R.id.ed_response);
         tvPassword = (TextView)findViewById(R.id.tv_password);
         
-        //
+        
         nicoMesssage = new NicoMessage();
         nico = new NicoRequest(nicoMesssage);
+        nicoInfoDataFile = new NicoInfoDataFile();
+        nicoInfoDataFile.storeFile();
+    }
+    /**
+     * 設定ファイル保存と復元
+     */
+    class NicoInfoDataFile {
+    	private NicoFile nicoFile = new NicoFile("NicoLivePlater.ini");
+    	private CheckBox checkBox = (CheckBox)findViewById(R.id.cbIsStore);
+    	public void saveFile() {
+    		NicoInfoData data = new NicoInfoData();
+
+    		if (checkBox.isChecked()){    		
+    			data.mail = NicoCrypt.encrypt(NicoKey.getKey(), email.getText().toString());
+    			data.password = NicoCrypt.encrypt(NicoKey.getKey(), password.getText().toString());
+    			data.sessionCookie = NicoCrypt.encrypt(NicoKey.getKey(), nico.getLoginCookie());
+    			data.lastUrl = NicoWebView.CONNECT_URL;
+    			data.isStore = checkBox.isChecked();
+    		} else {
+    			data.mail = "0".getBytes();
+    			data.password = "0".getBytes();
+    			data.sessionCookie = NicoCrypt.encrypt(NicoKey.getKey(), nico.getLoginCookie());
+    			data.lastUrl = NicoWebView.CONNECT_URL;
+    			data.isStore = checkBox.isChecked();
+    		}
+
+    		nicoFile.saveFile(getApplicationContext(), data);
+    	}
+    	
+    	public void storeFile(){
+    		if (nicoFile.canReadFile(getApplicationContext())){
+    			//ログインデータが保存されていれば、チェックボックスの状態を復元する
+    			checkBox.setChecked(((NicoInfoData)nicoFile.openFile(getApplicationContext())).isStore);
+    			//チェックボックスが付いれいれば、メールとパスワードを復元する
+    			if (checkBox.isChecked()){
+    				email.setText(NicoCrypt.decrypt(NicoKey.getKey(),
+    						((NicoInfoData)nicoFile.openFile(getApplicationContext())).mail));
+    				password.setText(NicoCrypt.decrypt(NicoKey.getKey(),
+    						((NicoInfoData)nicoFile.openFile(getApplicationContext())).password));
+    			}
+    		}
+    	}
     }
     
     /**
@@ -77,9 +121,9 @@ public class NicoLivePlayerActivity extends Activity {
     	
     	public void onClick(View v) {
     		setSenderID(R.id.btn_login);
+    		nicoInfoDataFile.saveFile();
     		key();
     		new Thread(this).start();
-    		new Intent(getApplicationContext(), MainActivity.class);
 		}
     	
     	public void run() {
@@ -127,14 +171,14 @@ public class NicoLivePlayerActivity extends Activity {
     	
     	public void run() {
 			nico.loginAlert(email.getText().toString(),password.getText().toString());
-			nicosocket.connectCommentServer(nico.getAlertAddress(), nico.getAlertPort(), nico.getAlertThread());
+			nicosocket.connectCommentServer(nico.getAlertAddress(), nico.getAlertPort(), nico.getAlertThread(),"1");
 			Message message = handler.obtainMessage(R.id.btn_loginAlert);
 			handler.sendMessage(message);
 		}
     	
 		public boolean handleMessage(Message msg) {
 			if(nicosocket.isConnected()){
-				new Thread(nicosocket.getAlertSocketRun()).start();
+				new Thread(nicosocket.getAlertSocketRunnable()).start();
 				btnLiveNo.setVisibility(View.GONE);
 				btnLogin.setVisibility(View.GONE);
 				btnLoginAlert.setVisibility(View.GONE);
@@ -146,8 +190,8 @@ public class NicoLivePlayerActivity extends Activity {
 			return true;
 		}
 
-		public void onReceive(String receivedMessege) {
-			etResponse.append(receivedMessege + "\n");
+		public void onReceive(String[] receivedMessege) {
+			etResponse.append(receivedMessege[0] + ":" + receivedMessege[1] + ":" + receivedMessege[2] + "\n");
 		}
     }
     
@@ -166,8 +210,8 @@ public class NicoLivePlayerActivity extends Activity {
         }
     	
     	public void run() {
-			nico.getPlayerStatus(etLiveNo.getText().toString());
-			nicosocket.connectCommentServer(nico.getAddress(), nico.getPort(), nico.getThread());
+			nico.getPlayerStatus(password.getText().toString());
+			nicosocket.connectCommentServer(nico.getAddress(), nico.getPort(), nico.getThread(), "1000");
 			Message message = handler.obtainMessage(R.id.btnLive);
 			handler.sendMessage(message);
 		}
@@ -184,8 +228,8 @@ public class NicoLivePlayerActivity extends Activity {
 			return true;
 		}
 
-		public void onReceive(String receivedMessege) {
-			etResponse.append(receivedMessege + "\n");
+		public void onReceive(String[] receivedMessege) {
+			etResponse.append(receivedMessege[0] + ":" + receivedMessege[1] + ":" + receivedMessege[2] + "\n");
 		}
     }
     
@@ -198,7 +242,7 @@ public class NicoLivePlayerActivity extends Activity {
 
     		case R.id.btnLive : {
     			if(nicosocket.isConnected()){
-    				if(nicosocket.closeSockt()){
+    				if(nicosocket.closeSocket()){
     					etResponse.setText("disconnected");
     					btnLiveNo.setVisibility(View.VISIBLE);
     					btnDisconnect.setVisibility(View.GONE);
@@ -208,7 +252,7 @@ public class NicoLivePlayerActivity extends Activity {
     		}
     		case R.id.btn_loginAlert : {
     			if(nicosocket.isConnected()){
-    				if(nicosocket.closeSockt()){
+    				if(nicosocket.closeSocket()){
     					etResponse.setText("disconnected");
     					btnLogin.setVisibility(View.VISIBLE);
     					btnLoginAlert.setVisibility(View.VISIBLE);

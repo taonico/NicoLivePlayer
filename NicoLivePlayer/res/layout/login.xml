@@ -15,7 +15,7 @@
         android:id="@+id/et_mail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textEmailAddress"
+        android:inputType="textPassword"
         android:text="" >
     </EditText>
 
@@ -65,6 +65,13 @@
             android:layout_height="wrap_content"
             android:text="Disconnect"
             android:visibility="gone" />
+
+        <CheckBox
+            android:id="@+id/cbIsStore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="保存する" />
+
     </LinearLayout>
 
     <EditText

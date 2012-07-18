@@ -9,11 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="240dp" />
 
-    <EditText
-        android:id="@+id/ed_response_main"
+    <ListView
+        android:id="@+id/commentListView2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scrollHorizontally="true"
-        android:text="responce" />
+        android:layout_height="match_parent" />
 
 </LinearLayout>

@@ -1,21 +1,21 @@
 package jp.tao.nico.live;
 
+import jp.tao.nico.live.NicoSocket.NicoLiveComment;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.webkit.WebView;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ListView;
 
+@SuppressLint("ParserError")
 public class MainActivity extends Activity {
 	private NicoMessage nicoMesssage = null;
 	private NicoRequest nicoRequest = null;
-	private NicoSocket nicosocket = null;
+	private NicoLiveComment nicoLiveComment = null;
 	
-	private EditText etResponse;
+	private NicoCommentListView _commentList;
 	//ビデオ表示
 	private WebView video;
 	private String _url = "";
@@ -27,9 +27,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        etResponse = (EditText)findViewById(R.id.ed_response_main);
+        _commentList = new NicoCommentListView((ListView)findViewById(R.id.commentListView2), getApplicationContext());
         video = (WebView)findViewById(R.id.videoView);
-        
+        //_commentList.append(new String[]{"123","52125133","こんばんは"});
+        //_commentList.append(new String[]{"124","52125133","こんばんはーーー"});
+
         nicoMesssage = new NicoMessage();
         nicoRequest = new NicoRequest(nicoMesssage);
         //クッキーを受け取る
@@ -72,36 +74,65 @@ public class MainActivity extends Activity {
      */
     class GetComment implements Handler.Callback, OnReceiveListener, Runnable {
     	final Handler handler = new Handler(this);
+
+    	NicoSocket nicosocket;
     	
     	public void getComment() {
         	_liveID = nicoMesssage.getLiveID(_url);
         	if (_liveID.equals("")){ return; }
         	
-    		nicosocket = new NicoSocket(nicoMesssage);
-    		nicosocket.setOnReceiveListener(this);
-    		
+        	if (nicosocket == null){
+        		nicosocket = new NicoSocket(nicoMesssage);
+        		nicosocket.setOnReceiveListener(this);
+        	}
+        	if (nicoLiveComment != null && nicoLiveComment.isConnected()){
+        		if (nicoLiveComment.getLiveID().equals(_liveID)){
+        			return;
+        		}
+        		else {
+        			nicoLiveComment.close();
+        		}
+        	}
     		new Thread(this).start();
     	}
     	
     	public void run() {
 			nicoRequest.getPlayerStatus(_liveID);
-			nicosocket.connectCommentServer(nicoRequest.getAddress(), nicoRequest.getPort(), nicoRequest.getThread());
+			nicoLiveComment = nicosocket.startNicoLiveComment(nicoRequest, _liveID);
 			Message message = handler.obtainMessage();
 			handler.sendMessage(message);
 		}
     	
 		public boolean handleMessage(Message msg) {
-			if (nicosocket.isConnected()){
-				new Thread(nicosocket).start();	
+			if (nicoLiveComment.isConnected()){
+				new Thread(nicoLiveComment).start();	
 			}else{
-				etResponse.setText("番組に接続できませんでした");
+				_commentList.append(new String[]{"Live ID:",_liveID,"番組に接続できませんでした"});
 			}
 			
 			return true;
 		}
 		
-		public void onReceive(String receivedMessege){
-			etResponse.append(receivedMessege + "\n");
+		public void onReceive(String[] receivedMessege){
+			if (receivedMessege[0].equals("chatresult")) {
+				//txtSendMessage.setText(nicoLiveComment.getComment());
+			}
+        	else {
+        		handler.post(new ReceivedMessege(receivedMessege));
+        	}
+			if (receivedMessege[2].equals("/disconnect") && nicoLiveComment.isConnected()){
+				nicoLiveComment.close();
+			}
 	    }
+		private class ReceivedMessege implements Runnable {
+			private String[] receivedMessege;
+			public ReceivedMessege(String[] receivedMessege){
+				this.receivedMessege = receivedMessege;
+			}
+			@Override
+			public void run() {
+				_commentList.append(receivedMessege);
+			}
+		}
 	}
 }

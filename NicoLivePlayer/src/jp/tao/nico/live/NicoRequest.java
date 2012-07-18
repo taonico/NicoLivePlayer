@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.HostnameVerifier;
 
@@ -47,15 +49,34 @@ public class NicoRequest {
 	private final String _getstreaminfo = "/api/getstreaminfo/";
 	//番組情報
 	private final String _getplayerstatus = "/api/getplayerstatus";
+	//getpostkey?thread=1187316452&block_no=0
+	private final String _getpostkey = "/api/getpostkey?thread=%1$s&block_no=%2$s";
 	//NGリストを取得[XML] (放送主のみ)
 	private final String _configurengword = "/configurengword?mode=get&video=";
-	//
+	//http://live.nicovideo.jp/api/getpublishstatus
+	//ext.nicovideo.jp
+	private final String _extNicovideoHost = "ext.nicovideo.jp";
+	//NicoNiCommunity
+	private final String _niconiCommunityHost = "com.nicovideo.jp";
+	private final String _getCommunityInfo = "/community/";
+	private final String _communityInfo = "/thumb_community/";
+	//Channel
+	private final String _channelInfo = "/thumb_channel/";
+	//http://www.nicovideo.jp/user/
+	private final String _wwwhost = "www.nicovideo.jp";
+	private final String _userid = "/user/";
+	private final String _userInfo = "/thumb_user/";
+	//heartbeat
+	private final String _heartbeat = "/api/heartbeat?v=";
+	
 	private SchemeRegistry schemeRegistry = new SchemeRegistry();
 	private HttpParams httpParams = new BasicHttpParams();
 	private NicoMessage nicoMessage = null;
 	//Login -> getplayerstatus
 	private CookieStore _cookieStore;
 	private String _loginCookie = "";
+	private final Pattern _nicoLoginCookiePattern = Pattern.compile("user_session=user_session_.+;domain=.nicovideo.jp;Path=/");
+	private final Pattern _nicoLoginCookieShortPattern = Pattern.compile("user_session_.+");
 	
 	//Alert server
 	private String _alertaddr = null;
@@ -66,11 +87,20 @@ public class NicoRequest {
 	private String _addr;
 	private int _port;
 	private String _thread;
+	private String _ticket;
+	private String _base_time;
+	public String getTicket() {
+		return _ticket;
+	}
+	public String getBaseTime() {
+		return _base_time;
+	}
 	//Login
 	private boolean _isLogin = false;
 	//Login Alert
 	private boolean _isLoginAlert = false;
-	private NodeList _community_id = null;
+	//
+	private Document document = null;
 	
 	/**
 	 * NicoRequest
@@ -110,18 +140,32 @@ public class NicoRequest {
 	 * @return 例）user_session=user_session_18180000_265723068462200000;domain=.nicovideo.jp;Path=/
 	 */
 	public String getLoginCookie(){
-		if (isLogin() && _loginCookie.toString().equals("")){
+		if (isLogin()){
 			_loginCookie = getLoginCookie(this._cookieStore);
 		}
 		return _loginCookie;
 	}
 	/**
 	 * ログインクッキーを設定します
-	 * 例）user_session=user_session_18180000_265723068462200000;domain=.nicovideo.jp;Path=/
+	 * 例1）user_session=user_session_18180000_265723068462200000;domain=.nicovideo.jp;Path=/
+	 * 例2）user_session_18180000_265723068462200000
 	 */
-	public void setLoginCookie(String loginCookie){		
-		setCookieStore(loginCookie.split(";")[0].split("=")[1]);
+	public void setLoginCookie(String loginCookie){
+		Matcher matcher = _nicoLoginCookiePattern.matcher(loginCookie);
+		if (matcher.matches()){
+			setCookieStore(loginCookie.split(";")[0].split("=")[1]);
+			setLoginCookie();
+		}
+
+		matcher = _nicoLoginCookieShortPattern.matcher(loginCookie);
+		if (matcher.matches()){
+			setCookieStore(loginCookie);
+			setLoginCookie();
+		} 	
+	}
+	private void setLoginCookie(){
 		_loginCookie = getLoginCookie(this._cookieStore);
+		_isLogin = true;
 	}
 	private void setCookieStore(String loginCookie){
 		_cookieStore = new BasicCookieStore();
@@ -135,6 +179,13 @@ public class NicoRequest {
         
         return cookie;
 	}
+	/**
+	 * 
+	 * @return HttpResponse Document
+	 */
+	public Document getHttpResponse(){
+		return document;
+	}
 	
 	/**
 	 * ニコニコ動画へのログイン処理
@@ -147,13 +198,7 @@ public class NicoRequest {
 		try{
 			
 			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
-			
-			/*
-			Uri.Builder uriBuilder = new Uri.Builder();
-			uriBuilder.path(_nicoPath);
-			uriBuilder.appendQueryParameter("site","nicolive");
-			*/
-			HttpPost post = new HttpPost(_nicoPath + "?site=nicolive");//uriBuilder.build().toString());
+			HttpPost post = new HttpPost(_nicoPath + "?site=nicolive");
 
 			// POST データの設定
 			List<BasicNameValuePair> postParams = new ArrayList<BasicNameValuePair>();
@@ -163,15 +208,6 @@ public class NicoRequest {
 
 			client.execute(new HttpHost(_nicoHost, 443, "https"), post);
 			_cookieStore = client.getCookieStore();
-			
-			/*HttpResponse response = 
-			 * if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				//
-				if (! _cookieStore.getCookies().isEmpty()){
-					return _cookieStore.getCookies().get(0).getValue();
-				}
-				return "";
-			}*/
 		}
         catch (Exception e){
         	_isLogin = false;
@@ -227,11 +263,8 @@ public class NicoRequest {
 		try{
 			
 			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
-			
-			//Uri.Builder uriBuilder = new Uri.Builder();
-			//uriBuilder.path(_nicoPath);
-			//uriBuilder.appendQueryParameter("site","nicolive_antenna");
-			HttpPost post = new HttpPost(_nicoPath + "?site=nicolive_antenna");//uriBuilder.build().toString());
+
+			HttpPost post = new HttpPost(_nicoPath + "?site=nicolive_antenna");
 
 			// POST データの設定
 			List<BasicNameValuePair> postParams = new ArrayList<BasicNameValuePair>();
@@ -247,12 +280,10 @@ public class NicoRequest {
 					ticket = nicoMessage.getNodeValue(getInputStream(response), "ticket");
 				}
 			}
-			
+
 			if(ticket != null){
 				client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
-				//uriBuilder = new Uri.Builder();
-				//uriBuilder.path(_getalertstatus);
-				post = new HttpPost(_getalertstatus);//uriBuilder.build().toString());
+				post = new HttpPost(_getalertstatus);
 				postParams = new ArrayList<BasicNameValuePair>();
 				postParams.add(new BasicNameValuePair("ticket", ticket));
 				post.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
@@ -260,21 +291,142 @@ public class NicoRequest {
 			}
 			
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				Document doc = nicoMessage.getDocument(getInputStream(response));
-				this._alertaddr = nicoMessage.getNodeValue(doc, "addr");
-				this.set_alertport(nicoMessage.getNodeValue(doc, "port"));
-				this._alertthread = nicoMessage.getNodeValue(doc, "thread");
-				this._isLoginAlert = true;
-				return "アラートログインしました";
+				document = nicoMessage.getDocument(getInputStream(response));
+				_alertaddr = nicoMessage.getNodeValue(document, "addr");
+				set_alertport(nicoMessage.getNodeValue(document, "port"));
+				_alertthread = nicoMessage.getNodeValue(document, "thread");
+				_isLoginAlert = true;
+				return nicoMessage.getNodeValue(document, "user_name");
 			}
 			
 		}catch (Exception e){
-			this._isLoginAlert = false;
+			_isLoginAlert = false;
         	return "errer " + e.getMessage();//"ログインに失敗しました";
         }
 		
 		this._isLoginAlert = false;
 		return "アラートログインに失敗しました";
+	}
+	/**
+	 * ユーザー認証を行わない アラートソケットの取得
+	 * @return user_id
+	 */
+	public String getAlertInfo(){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			HttpPost post = new HttpPost(_getalertinfo);
+			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), post);
+			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					document = nicoMessage.getDocument(getInputStream(response));
+					_alertaddr = nicoMessage.getNodeValue(document, "addr");
+					set_alertport(nicoMessage.getNodeValue(document, "port"));
+					_alertthread = nicoMessage.getNodeValue(document, "thread");
+					return nicoMessage.getNodeValue(document, "user_id");
+				}
+			}
+		} catch (Exception e){
+			return "errer " + e.getMessage();//"ログインに失敗しました";
+		}
+
+		return "アラートログインに失敗しました";
+	}
+	
+	/**
+	 * 番組情報取得API
+	 * @param lv
+	 * @return Title
+	 */
+	public PlayerStatusData getStreamInfo(String lv){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			HttpPost post = new HttpPost(_getstreaminfo + lv);
+			post.addHeader("User-Agent", "NicoLiveAlert 1.2.0");
+			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					Document document = nicoMessage.getDocument(getInputStream(response));
+					PlayerStatusData playerStatusData = new PlayerStatusData(lv);
+					//playerStatusData.setTitle(getResponceContents(response));
+					playerStatusData.setTitle(nicoMessage.getNodeValue(document, PlayerStatusData.TITLE));
+					playerStatusData.setCommunityID(nicoMessage.getNodeValue(document, PlayerStatusData.default_communityID));
+					playerStatusData.setCommunityName(nicoMessage.getNodeValue(document, PlayerStatusData.CommunityName));
+					//System.out.println(playerStatusData.getTitle());
+					return playerStatusData;
+				}
+			}
+		} catch (Exception e){
+			PlayerStatusData playerStatusData = new PlayerStatusData(lv);
+			playerStatusData.setTitle("errer:" + e.getMessage());
+			return playerStatusData;
+		}
+		PlayerStatusData playerStatusData = new PlayerStatusData("アラートログインに失敗しました");
+		return playerStatusData;
+	}
+	
+	public void getCommunityInfo(NicommunityData nicommunityData){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			client.setCookieStore(_cookieStore);
+			HttpGet post = new HttpGet(_getCommunityInfo + nicommunityData.CommunityID);
+			post.addHeader("User-Agent", "NicoLiveAlert 1.2.0");
+			HttpResponse response = client.execute(new HttpHost(_niconiCommunityHost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					nicoMessage.setCommunityInfo(getResponceContents(response),nicommunityData);
+				}
+			}
+		} catch (Exception e){
+			System.out.println("errer " + e.getMessage());
+		}
+	}
+	public void getChannelInfo(NicommunityData nicommunityData){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			client.setCookieStore(_cookieStore);
+			HttpGet post = new HttpGet(_channelInfo + nicommunityData.CommunityID);
+			post.addHeader("User-Agent", "NicoLiveAlert 1.2.0");
+			HttpResponse response = client.execute(new HttpHost(_extNicovideoHost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					nicoMessage.setChannelInfo(getResponceContents(response),nicommunityData);
+				}
+			}
+		} catch (Exception e){
+			System.out.println("errer " + e.getMessage());
+		}
+	}
+	
+	/**
+	 * ユーザIDからユーザー名を取得します
+	 * NicoRequest nicoRequest = new NicoRequest(nicoMessage);
+	 * nicoRequest.setLoginCookie(user_session_cookie);
+	 * NicoUserData userData =  new NicoUserData("userID","");
+	 * nicoRequest.setUserData(userData);
+	 * @param userData
+	 */
+	public void setUserData(NicoUserData userData){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			client.setCookieStore(_cookieStore);
+			HttpGet post = new HttpGet(_userid + userData.UserID);
+			post.addHeader("User-Agent", "NicoLiveAlert 1.2.0");
+			post.addHeader("Host", "www.nicovideo.jp");
+			HttpResponse response = client.execute(new HttpHost(_wwwhost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					userData.UserName = nicoMessage.gerUserName(getResponceContents(response));
+				}
+			}
+		} catch (Exception e){
+			System.out.println("errer " + e.getMessage());
+		}
 	}
 	
 	private InputStream getInputStream(HttpResponse response) throws IllegalStateException, IOException{
@@ -333,7 +485,9 @@ public class NicoRequest {
 				this._addr = nicoMessage.getNodeValue(doc, "addr");
 				this.set_port(nicoMessage.getNodeValue(doc, "port"));
 				this._thread = nicoMessage.getNodeValue(doc, "thread");
-				this._community_id = nicoMessage.getNodeList(doc, "community_id");
+				//this._community_id = nicoMessage.getNodeList(doc, "community_id");
+				this._ticket = nicoMessage.getNodeValue(doc, "ticket");
+				this._base_time = nicoMessage.getNodeValue(doc, "base_time");
 			}
 			
 		}catch (Exception e){
@@ -341,6 +495,51 @@ public class NicoRequest {
         }
 		
 		return this._playerStatusData;
+	}
+	
+	public String getPostkey(String thread, String commentNo){
+		String block_no = "0";
+		if (commentNo == null || commentNo.isEmpty()){
+			block_no = "0";
+		} 
+		else {
+			block_no = String.valueOf(Integer.valueOf(commentNo) / 100);
+		}
+		
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			client.setCookieStore(_cookieStore);
+			HttpGet post = new HttpGet(String.format(_getpostkey, thread, block_no));
+			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					return getResponceContents(response).split("=")[1];
+				}
+			}
+		} catch (Exception e){
+			return "";
+		}
+		
+		return "";
+	}
+	public String getHeartbeat(String lv){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			client.setCookieStore(_cookieStore);
+			HttpGet post = new HttpGet(_heartbeat + lv);
+			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					Document doc = nicoMessage.getDocument(getInputStream(response));
+					return nicoMessage.getNodeValue(doc, "commentCount");
+				}
+			}
+		} catch (Exception e){
+			return "";
+		}
+		return "";
 	}
 
 	/**
