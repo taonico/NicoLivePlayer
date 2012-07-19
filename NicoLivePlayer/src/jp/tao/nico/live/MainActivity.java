@@ -17,10 +17,9 @@ public class MainActivity extends Activity {
 	
 	private NicoCommentListView _commentList;
 	//ビデオ表示
-	private WebView video;
 	private String _url = "";
 	private String _liveID = "";
-	
+	private NicoWebView _nicoWebView;
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -28,21 +27,22 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main);
         
         _commentList = new NicoCommentListView((ListView)findViewById(R.id.commentListView2), getApplicationContext());
-        video = (WebView)findViewById(R.id.videoView);
-        //_commentList.append(new String[]{"123","52125133","こんばんは"});
-        //_commentList.append(new String[]{"124","52125133","こんばんはーーー"});
+        /*_commentList.append(new String[]{"123","sFDtGZH13i_HWs6x9_l9lDSo_fk","こんばんは"});
+        _commentList.append(new String[]{"124","52125133","こんばんはーーー"});
+        _commentList.append(new String[]{"125","564884","こんばんは"});
+        _commentList.append(new String[]{"126","134536","こんばんはーーー"});*/
 
         nicoMesssage = new NicoMessage();
         nicoRequest = new NicoRequest(nicoMesssage);
         //クッキーを受け取る
         nicoRequest.setLoginCookie(getIntent().getStringExtra("LoginCookie"));
-        NicoWebView nwv = new NicoWebView(nicoRequest.getLoginCookie(), video);
+        _nicoWebView = new NicoWebView(nicoRequest.getLoginCookie(), (WebView)findViewById(R.id.videoView));
         
         //ニコ生ページをロードする
-        nwv.loadUrl();
+        _nicoWebView.loadUrl();
         _url = NicoWebView.CONNECT_URL;
         //WebViewがページを読み込みを開始した時のイベント通知ハンドラを設定
-        nwv.setOnPageStartedHandler(new Handler(new ChangedUrlHandler()));
+        _nicoWebView.setOnPageStartedHandler(new Handler(new ChangedUrlHandler()));
     }
     
     /**
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
     	NicoSocket nicosocket;
     	
     	public void getComment() {
-        	_liveID = nicoMesssage.getLiveID(_url);
+        	_liveID = nicoMesssage.getLiveID(_url, true);
         	if (_liveID.equals("")){ return; }
         	
         	if (nicosocket == null){
@@ -105,6 +105,7 @@ public class MainActivity extends Activity {
     	
 		public boolean handleMessage(Message msg) {
 			if (nicoLiveComment.isConnected()){
+				_nicoWebView.loadUrl("javascript:document.write(\"<div id=\\\"player\\\"></div>\");so.write(\"player\")");
 				new Thread(nicoLiveComment).start();	
 			}else{
 				_commentList.append(new String[]{"Live ID:",_liveID,"番組に接続できませんでした"});

@@ -401,6 +401,25 @@ public class NicoRequest {
 			System.out.println("errer " + e.getMessage());
 		}
 	}
+	public String getFlashPayer(String lv){
+		try{
+			DefaultHttpClient client = new DefaultHttpClient(new ThreadSafeClientConnManager(httpParams, schemeRegistry), httpParams);
+			client.setCookieStore(_cookieStore);
+			HttpGet post = new HttpGet("/watch/" + lv);
+			//post.addHeader("User-Agent", "NicoLiveAlert 1.2.0");
+			HttpResponse response = client.execute(new HttpHost(_apiHost, 80, "http"), post);			
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				//
+				if (response.getEntity().isStreaming()){
+					return getResponceContents(response);
+				}
+			}
+		} catch (Exception e){
+			System.out.println("errer " + e.getMessage());
+		}
+		
+		return "error";
+	}
 	
 	/**
 	 * ユーザIDからユーザー名を取得します

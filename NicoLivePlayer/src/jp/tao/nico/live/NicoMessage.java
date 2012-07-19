@@ -110,7 +110,7 @@ public class NicoMessage {
 		Matcher matcher = _nicoLiveChannelPattern.matcher(data);
 		return matcher.matches();
 	}
-	public String getLiveID (String url){
+	public String getLiveID (String url, boolean isSpMode){
 		Matcher matcher = _liveLvPattern.matcher(url);
 		if(matcher.matches()){
 			return matcher.group(1);
@@ -119,6 +119,10 @@ public class NicoMessage {
 		matcher = _liveComuPattern.matcher(url);
 		if (matcher.matches()){
 			return matcher.group(1);
+		}
+		
+		if (isSpMode) {
+			return "";
 		}
 		
 		matcher = _nicoLiveComuPattern.matcher(url);
