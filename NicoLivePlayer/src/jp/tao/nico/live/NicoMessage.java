@@ -24,8 +24,9 @@ public class NicoMessage {
 	private final Pattern chatOfficialpattern = Pattern.compile("<chat.*>(.*,.*)</chat>");
 	private final Pattern _commentChatpattern = Pattern.compile("<chat .* no=\"([0-9]*?)\" .* user_id=\"(.*?)\" .*>(.*)</chat>"); 
 	private final Pattern _chatresultpattern = Pattern.compile("<chat_result thread=\".+\" status=\"([0-9])\" .+/>");
-	private final Pattern _liveLvPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(lv[0-9]+)");
-	private final Pattern _liveComuPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(co[0-9]+)");
+	private final Pattern _liveLvPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(lv[0-9]+).*");
+	private final Pattern _liveComuPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(co[0-9]+).*");
+	private final Pattern _liveChannelPattern = Pattern.compile("http://sp.live.nicovideo.jp/watch/(ch[0-9]+).*");
 	
 	private final Pattern _nicoLiveLvPattern = Pattern.compile(".*(lv[0-9]+).*");
 	private final Pattern _nicoLiveComuPattern = Pattern.compile(".*(co[0-9]+).*");
@@ -36,6 +37,11 @@ public class NicoMessage {
 	private final Pattern _channnelNamePattern = Pattern.compile("[.\\s\\S]*<title>(.*)‐ニコニコチャンネル</title>[.\\s\\S]*");
 	
 	private final Pattern _userNamePattern = Pattern.compile("[.\\s\\S]*<title>(.*)さんのユーザーページ[.\\s\\S]*</title>[.\\s\\S]*");
+	//NG Word
+	private final Pattern _ngKasu = Pattern.compile(".*(^|[\\s])[かカ][すス]($|[\\s]).*");
+	private final Pattern _ngShine = Pattern.compile(".*(^|[\\s])[しシ][ねネ]($|[\\s]).*");
+	private final Pattern _ngAss = Pattern.compile(".*(^|[\\s])[Aa][Ss][Ss]($|[\\s]).*");
+	
 	public NicoMessage(){
 		
 	}
@@ -75,6 +81,21 @@ public class NicoMessage {
 	}
 	public String unescapeXML(String xml){
 		return xml.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&");
+	}
+	public String escapeNgWord(String word){
+		Matcher matcher = _ngKasu.matcher(word);
+		if(matcher.matches()){
+			return word;
+		}
+		matcher = _ngShine.matcher(word);
+		if(matcher.matches()){
+			return word;
+		}
+		matcher = _ngAss.matcher(word);
+		if(matcher.matches()){
+			return word;
+		}
+		return word.replace("かす", "か/す").replace("カス", "カ/ス").replace("しね", "し/ね").replace("シネ", "シ/ネ").replace("ASS", "A/SS").replace("ass", "a/ss");
 	}
 	public String get_vpos(String baseTime){
 		return String.valueOf(System.currentTimeMillis()/10 - Long.valueOf(baseTime)*100);
@@ -117,6 +138,11 @@ public class NicoMessage {
 		}
 		
 		matcher = _liveComuPattern.matcher(url);
+		if (matcher.matches()){
+			return matcher.group(1);
+		}
+		
+		matcher = _liveChannelPattern.matcher(url);
 		if (matcher.matches()){
 			return matcher.group(1);
 		}

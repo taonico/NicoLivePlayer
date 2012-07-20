@@ -23,7 +23,9 @@ public class NicoWebView {
 	private WebViewClient client = null;
 	private String _loginCookie =null;
 	private Handler onPageStartedHandler = null;
+	private Handler onPageFinishedHandler = null;
 	public final static int ON_PAGE_STARTED = 0;
+	public final static int ON_PAGE_FINISHED = 1;
 	
 	public NicoWebView(String loginCookie) {
 		this._loginCookie = loginCookie;
@@ -70,6 +72,13 @@ public class NicoWebView {
 	public void setOnPageStartedHandler(final Handler onPageStartedHandler){
 		this.onPageStartedHandler = onPageStartedHandler;
 	}
+	/**
+	 * ページの読み込み完了を通知するハンドラを登録する
+	 * @param onPageStartedHandler
+	 */
+	public void setOnPageFinishedHandler(final Handler onPageFinishedHandler){
+		this.onPageFinishedHandler = onPageFinishedHandler;
+	}
 	public WebViewClient getWebViewClient(){
 		return this.client;
 	}
@@ -78,6 +87,9 @@ public class NicoWebView {
 	}
 	public void loadUrl(String loadUrl){
 		this.webview.loadUrl(loadUrl);
+	}
+	public void loadData(String lodaData){
+		this.webview.loadData(lodaData, "text/html", null);
 	}
 	public String getLoginCookie(){
 		return this._loginCookie;
@@ -120,11 +132,6 @@ public class NicoWebView {
     		setCookieManeger();
     		setCookie();
     	}
-    	@Override
-    	public void onPageFinished(WebView wv, String url){
-    		setCookieManeger();
-    		setCookie();
-    	}
     	
     	/** 
     	 * ページの読み込みを通知する
@@ -134,6 +141,20 @@ public class NicoWebView {
     	public void onPageStarted(WebView view, String url, Bitmap favicon){
     		Message message = onPageStartedHandler.obtainMessage(ON_PAGE_STARTED, url);
     		onPageStartedHandler.sendMessage(message);
+    	}
+    	
+    	/** 
+    	 * ページの読み込み完了を通知する
+    	 * @see android.webkit.WebViewClient#onPageFinished(android.webkit.WebView, java.lang.String)
+    	 */
+    	@Override
+    	public void onPageFinished(WebView view, String url){
+    		setCookieManeger();
+    		setCookie();
+    		if (onPageFinishedHandler != null){
+    			Message message = onPageFinishedHandler.obtainMessage(ON_PAGE_FINISHED, url);
+    			onPageFinishedHandler.sendMessage(message);
+    		}
     	}
     	
     	private void setCookie(){

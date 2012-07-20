@@ -20,6 +20,8 @@ public class MainActivity extends Activity {
 	private String _url = "";
 	private String _liveID = "";
 	private NicoWebView _nicoWebView;
+	private String _embed1 = "<embed type=\"application/x-shockwave-flash\" src=\"http://nl.nimg.jp/sp/swf/spplayer.swf?120501105350\" width=\"100%\" height=\"100%\" style=\"\" id=\"flvplayer\" name=\"flvplayer\" bgcolor=\"#FFFFFF\" quality=\"high\" allowscriptaccess=\"always\" flashvars=\"playerRev=120501105350_0&amp;playerTplRev=110721071458&amp;playerType=sp&amp;v=";
+	private String _embed2 = "&amp;lcname=&amp;pt=community&amp;category=&amp;watchVideoID=&amp;videoTitle=&amp;gameKey=&amp;gameTime=&amp;isChannel=&amp;ver=2.5&amp;userOwner=false&amp;us=0\">";
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,16 +45,20 @@ public class MainActivity extends Activity {
         _url = NicoWebView.CONNECT_URL;
         //WebViewがページを読み込みを開始した時のイベント通知ハンドラを設定
         _nicoWebView.setOnPageStartedHandler(new Handler(new ChangedUrlHandler()));
+        //WebViewがページを読み込みを完了した時のイベント通知ハンドラを設定
+        _nicoWebView.setOnPageFinishedHandler(new Handler(new OnPageFinishedHandler()));
     }
     
     /**
      * WebViewのURL変更時の処理
      */
-    class ChangedUrlHandler implements Handler.Callback {
+    private class ChangedUrlHandler implements Handler.Callback {
     	public boolean handleMessage(Message message) {
     		switch (message.what){
     		case NicoWebView.ON_PAGE_STARTED:
     			if (isChangedUrl(message.obj.toString())){
+    				_liveID = nicoMesssage.getLiveID(_url, true);
+    	        	if (_liveID.equals("")){ return false; }
     				new GetComment().getComment();
     				return true;
     			}
@@ -68,6 +74,27 @@ public class MainActivity extends Activity {
     		return false;
     	}
     }
+    private class OnPageFinishedHandler implements Handler.Callback {
+		@Override
+		public boolean handleMessage(Message msg) {
+			if (msg.what == NicoWebView.ON_PAGE_FINISHED){
+	        	if (nicoMesssage.getLiveID(msg.obj.toString(), true).equals("")){ return false; }
+	        	
+				//Test用
+	        	//_nicoWebView.loadData("<a href=\"http://sp.live.nicovideo.jp/\">sp.live.nicovideo.jp</a>");
+	        	
+	        	//embed tag を確認
+	        	//System.out.println(_embed1 + nicoLiveComment.getLiveID() + _embed2);	
+	        	//直接 embed tag をLoadして、Nico Live Flash Playerを作成する
+				//_nicoWebView.loadData(_embed1 + nicoLiveComment.getLiveID() + _embed2);
+	        	
+	        	//ニコニコ生放送のJavascript Objets - SWFObject#write(so.write) を利用して Nico Live Flash Playerを作成する
+	        	_nicoWebView.loadUrl("javascript:document.write('<div id=\\\"sp_player\\\"></div>\');so.write('sp_player');");
+				return true;
+			}
+			return false;
+		}
+	}
     
     /**
      * 放送ページのコメント取得処理
@@ -77,10 +104,7 @@ public class MainActivity extends Activity {
 
     	NicoSocket nicosocket;
     	
-    	public void getComment() {
-        	_liveID = nicoMesssage.getLiveID(_url, true);
-        	if (_liveID.equals("")){ return; }
-        	
+    	public void getComment() {        	
         	if (nicosocket == null){
         		nicosocket = new NicoSocket(nicoMesssage);
         		nicosocket.setOnReceiveListener(this);
@@ -92,7 +116,7 @@ public class MainActivity extends Activity {
         		else {
         			nicoLiveComment.close();
         		}
-        	}
+        	}     	
     		new Thread(this).start();
     	}
     	
@@ -104,15 +128,14 @@ public class MainActivity extends Activity {
 		}
     	
 		public boolean handleMessage(Message msg) {
-			if (nicoLiveComment.isConnected()){
-				_nicoWebView.loadUrl("javascript:document.write(\"<div id=\\\"player\\\"></div>\");so.write(\"player\")");
+			if (nicoLiveComment.isConnected()){				
 				new Thread(nicoLiveComment).start();	
 			}else{
 				_commentList.append(new String[]{"Live ID:",_liveID,"番組に接続できませんでした"});
 			}
 			
 			return true;
-		}
+		}		
 		
 		public void onReceive(String[] receivedMessege){
 			if (receivedMessege[0].equals("chatresult")) {
