@@ -489,24 +489,24 @@ public class NicoMessage {
 			_premium = playerStatusData.getIsPremium();
 		}
 		public String getSendComment(String postkey, String mail, String sendComment){
-			if (postkey == null || postkey.isEmpty()){
+			if (postkey == null || postkey.equals("")){
 
 			}
 			else {
 				_postkey = postkey;
 			}
-			if (mail == null || mail.isEmpty()){ 
+			if (mail == null || mail.equals("")){ 
 				_mail = "184";
 			}
 			else {
 				_mail = mail;
 			}
 			_vpos = get_vpos(_baseTime);
-			_sendComment = escapeXML(sendComment);
+			_sendComment = escapeXML(escapeNgWord(sendComment));
 			return MessageFormat.format(_sendCommentFormat, _thread, _ticket, _vpos, _postkey, _mail, _user_id, _premium, _sendComment);
 		}
 		public String getResendComment(String postkey){
-			if (postkey == null || postkey.isEmpty()){
+			if (postkey == null || postkey.equals("")){
 
 			}
 			else {

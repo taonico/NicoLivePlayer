@@ -84,13 +84,23 @@ public class MainActivity extends Activity {
 	        	//_nicoWebView.loadData("<a href=\"http://sp.live.nicovideo.jp/\">sp.live.nicovideo.jp</a>");
 	        	
 	        	//embed tag を確認
-	        	//System.out.println(_embed1 + nicoLiveComment.getLiveID() + _embed2);	
+	        	//System.out.println(_embed1 + _liveID + _embed2);	
 	        	//直接 embed tag をLoadして、Nico Live Flash Playerを作成する
-				//_nicoWebView.loadData(_embed1 + nicoLiveComment.getLiveID() + _embed2);
+				//_nicoWebView.loadData(_embed1 + _liveID + _embed2);
 	        	
 	        	//ニコニコ生放送のJavascript Objets - SWFObject#write(so.write) を利用して Nico Live Flash Playerを作成する
-	        	_nicoWebView.loadUrl("javascript:document.write('<div id=\\\"sp_player\\\"></div>\');so.write('sp_player');");
-				return true;
+	        	//_nicoWebView.loadUrl("javascript:document.write('<div id=\\\"sp_player\\\"></div>\');so.write('sp_player');");
+				     	
+	        	//JavaScript版
+	        	//String playerUrl = "http://www.geocities.jp/geojavascript/NicoSPFlashPlayerTest.html?";
+	        	//String playerUrl = "http://www.geocities.jp/geojavascript/NicoSPFlashPlayer.html?";
+	        	
+	        	//CGI版
+	        	//String playerUrl = "http://www41.atpages.jp/taonico/NicoPlayer/test.cgi?v=";
+	        	String playerUrl = "http://www41.atpages.jp/taonico/NicoPlayer/index.cgi?v=";
+	        	
+	        	_nicoWebView.loadUrl(playerUrl + _liveID);
+	        	return true;
 			}
 			return false;
 		}

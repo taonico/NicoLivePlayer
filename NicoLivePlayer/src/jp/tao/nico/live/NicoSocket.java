@@ -180,7 +180,7 @@ public class NicoSocket implements Runnable{
 			nicoRequest.setLoginCookie(_cookie);
 			String commentNo = nicoRequest.getHeartbeat(_liveID);
 			System.out.println("Heartbeat:"+ _commentCount + "->" + commentNo);
-     		if (! commentNo.isEmpty()){
+     		if (! commentNo.equals("")){
      			_commentCount = commentNo;
      		}
 			return _commentCount;
@@ -253,10 +253,10 @@ public class NicoSocket implements Runnable{
 		}
 		public String send(String sendComment){
 			_sendComment = sendComment;
-			if (_postkey.isEmpty()){
+			if (_postkey.equals("")){
 				getPostkey();
 			}
-			if (! _postkey.isEmpty()){
+			if (! _postkey.equals("")){
 				System.out.println(sendCommentData.getSendComment(_postkey, null, _sendComment));
 				return sendMessage(sendCommentData.getSendComment(_postkey, null, _sendComment));
 			}
@@ -265,14 +265,14 @@ public class NicoSocket implements Runnable{
 		}
 		private void resend(){
 			getPostkey();
-			if ( ! _postkey.isEmpty()){
+			if ( ! _postkey.equals("")){
 				sendMessage(sendCommentData.getResendComment(_postkey));
 			}
 			System.out.println(sendCommentData.getResendComment(_postkey));
 		}
 		private void getPostkey(){
 			String postkey = nicoRequest.getPostkey(playerStatusData.getThread(), heartBeat.getCommentNo());
-			if (postkey == null || postkey.isEmpty()){
+			if (postkey == null || postkey.equals("")){
 				_postkey = "";
 				return;
 			}

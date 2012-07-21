@@ -518,7 +518,7 @@ public class NicoRequest {
 	
 	public String getPostkey(String thread, String commentNo){
 		String block_no = "0";
-		if (commentNo == null || commentNo.isEmpty()){
+		if (commentNo == null || commentNo.equals("")){
 			block_no = "0";
 		} 
 		else {
