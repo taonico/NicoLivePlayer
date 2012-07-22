@@ -91,6 +91,9 @@ public class NicoWebView {
 	public void loadData(String lodaData){
 		this.webview.loadData(lodaData, "text/html", null);
 	}
+	public void loadDataWithBaseURL (String lodaData){
+		this.webview.loadDataWithBaseURL("http://sp.live.nicovideo.jp/watch/" ,lodaData, "text/html", null, "http://sp.live.nicovideo.jp/");
+	}
 	public String getLoginCookie(){
 		return this._loginCookie;
 	}
