@@ -56,7 +56,7 @@ public class NicoWebView {
 		WebSettings settings=webview.getSettings();
 		settings.setPluginsEnabled(true);
 		settings.setJavaScriptEnabled(true);
-		settings.setBlockNetworkImage(true);
+		//settings.setBlockNetworkImage(true);
 		
 		cookieSyncManager = CookieSyncManager.createInstance(this.webview.getContext());
 		cookieSyncManager.startSync();

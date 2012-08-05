@@ -41,6 +41,7 @@ public class NicoMessage {
 	private final Pattern _ngKasu = Pattern.compile(".*(^|[\\s])[かカ][すス]($|[\\s]).*");
 	private final Pattern _ngShine = Pattern.compile(".*(^|[\\s])[しシ][ねネ]($|[\\s]).*");
 	private final Pattern _ngAss = Pattern.compile(".*(^|[\\s])[Aa][Ss][Ss]($|[\\s]).*");
+	private final Pattern _ngButt = Pattern.compile(".*(^|[\\s])[Bb][Uu][Tt][Tt]($|[\\s]).*");
 	
 	public NicoMessage(){
 		
@@ -95,7 +96,11 @@ public class NicoMessage {
 		if(matcher.matches()){
 			return word;
 		}
-		return word.replace("かす", "か/す").replace("カス", "カ/ス").replace("しね", "し/ね").replace("シネ", "シ/ネ").replace("ASS", "A/SS").replace("ass", "a/ss");
+		matcher = _ngButt.matcher(word);
+		if(matcher.matches()){
+			return word;
+		}
+		return word.replace("かす", "か/す").replace("カス", "カ/ス").replace("しね", "し/ね").replace("シネ", "シ/ネ").replace("ASS", "A/SS").replace("ass", "a/ss").replace("BUTT", "B/UTT").replace("butt", "b/utt");
 	}
 	public String get_vpos(String baseTime){
 		return String.valueOf(System.currentTimeMillis()/10 - Long.valueOf(baseTime)*100);

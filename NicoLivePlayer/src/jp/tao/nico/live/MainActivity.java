@@ -11,7 +11,7 @@ import android.widget.ListView;
 
 @SuppressLint("ParserError")
 public class MainActivity extends Activity {
-	private NicoMessage nicoMesssage = null;
+	private NicoMessage nicoMessage = null;
 	private NicoRequest nicoRequest = null;
 	private NicoLiveComment nicoLiveComment = null;
 	
@@ -35,8 +35,8 @@ public class MainActivity extends Activity {
         _commentList.append(new String[]{"125","564884","こんばんは"});
         _commentList.append(new String[]{"126","134536","こんばんはーーー"});*/
 
-        nicoMesssage = new NicoMessage();
-        nicoRequest = new NicoRequest(nicoMesssage);
+        nicoMessage = new NicoMessage();
+        nicoRequest = new NicoRequest(nicoMessage);
         //クッキーを受け取る
         nicoRequest.setLoginCookie(getIntent().getStringExtra("LoginCookie"));
         _nicoWebView = new NicoWebView(nicoRequest.getLoginCookie(), (WebView)findViewById(R.id.videoView));
@@ -58,9 +58,9 @@ public class MainActivity extends Activity {
     		switch (message.what){
     		case NicoWebView.ON_PAGE_STARTED:
     			if (isChangedUrl(message.obj.toString())){
-    				_liveID = nicoMesssage.getLiveID(_url, true);
+    				_liveID = nicoMessage.getLiveID(_url, true);
     	        	if (_liveID.equals("")){ return false; }
-    				new GetComment().getComment();
+    				new GetComment().getComment();  	        	
     				return true;
     			}
     			break;
@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
 		@Override
 		public boolean handleMessage(Message msg) {
 			if (msg.what == NicoWebView.ON_PAGE_FINISHED){
-	        	if (nicoMesssage.getLiveID(msg.obj.toString(), true).equals("")){ return false; }
+	        	if (nicoMessage.getLiveID(msg.obj.toString(), true).equals("")){ return false; }
 	        	
 				//Test用
 	        	//_nicoWebView.loadData("<a href=\"http://sp.live.nicovideo.jp/\">sp.live.nicovideo.jp</a>");
@@ -87,12 +87,12 @@ public class MainActivity extends Activity {
 	        	//embed tag を確認
 	        	//System.out.println(_css + _embed1 + _liveID + _embed2);	
 	        	//直接 embed tag をLoadして、Nico Live Flash Playerを作成する
-				//_nicoWebView.loadData(_embed1 + _liveID + _embed2);
+				//_nicoWebView.loadData(_css + _embed1 + _liveID + _embed2);
 	        	_nicoWebView.loadDataWithBaseURL(_css +_embed1 + _liveID + _embed2);
 	        	
 	        	//ニコニコ生放送のJavascript Objets - SWFObject#write(so.write) を利用して Nico Live Flash Playerを作成する
 	        	//_nicoWebView.loadUrl("javascript:document.write('" + _css + "<div id=\\\"sp_player\\\"></div>\');so.write('sp_player');");
-				     	
+				
 	        	//JavaScript版
 	        	//String playerUrl = "http://www.geocities.jp/geojavascript/NicoSPFlashPlayerTest.html?";
 	        	//String playerUrl = "http://www.geocities.jp/geojavascript/NicoSPFlashPlayer.html?";
@@ -123,7 +123,7 @@ public class MainActivity extends Activity {
     	
     	public void getComment() {        	
         	if (nicosocket == null){
-        		nicosocket = new NicoSocket(nicoMesssage);
+        		nicosocket = new NicoSocket(nicoMessage);
         		nicosocket.setOnReceiveListener(this);
         	}
         	if (nicoLiveComment != null && nicoLiveComment.isConnected()){
@@ -133,7 +133,7 @@ public class MainActivity extends Activity {
         		else {
         			nicoLiveComment.close();
         		}
-        	}     	
+        	}
     		new Thread(this).start();
     	}
     	
@@ -145,8 +145,8 @@ public class MainActivity extends Activity {
 		}
     	
 		public boolean handleMessage(Message msg) {
-			if (nicoLiveComment.isConnected()){				
-				new Thread(nicoLiveComment).start();	
+			if (nicoLiveComment.isConnected()){
+				new Thread(nicoLiveComment).start();
 			}else{
 				_commentList.append(new String[]{"Live ID:",_liveID,"番組に接続できませんでした"});
 			}
